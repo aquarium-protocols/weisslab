@@ -1,0 +1,87 @@
+argument
+  debug_mode: string, "Yes or No"
+  image_option: string, "Yes or No"
+  group: group, "choose the group to assign this metacol"
+end
+
+place tasks_inputs
+  protocol: "aqualib:workflows/general/tasks_inputs.rb"
+  group: group
+  argument
+    debug_mode: debug_mode
+    group: group
+    image_option: image_option
+    task_name: "Yeast Transformation"
+  end
+  marked: true
+  start: now()
+  window: hours(1)
+end
+
+place digest
+  protocol: "aqualib:workflows/yeast/digest_plasmid_yeast_transformation.rb"
+  group: group
+  start: now()
+  window: hours(20)
+end
+
+place make_plate
+  protocol: "aqualib:workflows/yeast/make_antibiotic_plate.rb"
+  group: group
+  start: now()
+  window: hours(20)
+end
+
+place transformation
+  protocol: "aqualib:workflows/yeast/yeast_transformation.rb"
+  group: group
+  start: hours(1)
+  window: hours(20)
+end
+
+place plate
+  protocol: "aqualib:workflows/yeast/plate_yeast_transformation.rb"
+  group: group
+  start: hours(3)
+  window: hours(20)
+end
+
+place image
+  protocol: "aqualib:workflows/ecoli/image_plate.rb"
+  group: group
+  marked: false
+  start: hours(66)
+  window: hours(10)
+end
+
+place re_image_plate
+  protocol: "aqualib:workflows/ecoli/image_plate.rb"
+  group: group
+  marked: false
+  start: hours(5)
+  window: hours(1)
+end
+
+wire tasks_inputs => digest
+wire digest => make_plate
+wire make_plate => transformation
+wire transformation => plate
+wire plate => image
+wire image => re_image_plate
+
+transition [ tasks_inputs ] => [ digest ] when !error(0) && completed(0) end
+transition [ digest ] => [ make_plate ] when !error(0) && completed(0) end
+transition [ make_plate ] => [ transformation ] when !error(0) && completed(0) end
+transition [ transformation ] => [ plate ] when !error(0) && completed(0) end
+transition [ plate ] => [ image ] when !error(0) && completed(0) end
+transition [ image ] => [] when !error(0) && completed(0) end
+transition [ re_image_plate ] => [] when !error(0) && completed (0) end
+
+# restart if errored out
+transition [ tasks_inputs ] => [ tasks_inputs ] when error(0) end
+transition [ digest ] => [ digest ] when error(0) end
+transition [ make_plate ] => [ make_plate ] when error(0) end
+transition [ transformation ] => [ transformation ] when error(0) end
+transition [ plate ] => [ plate ] when error(0) end
+transition [ image ] => [ re_image_plate ] when error(0) end
+transition [ re_image_plate ] => [ re_image_plate ] when error(0) end
