@@ -1,0 +1,60 @@
+LR Reaction
+Use nanodrop to measure concentration of pEntry vectors, make 5 femtomolar working solution of each pEntry.
+Combine into 1 aliquot:
+•	1uL of 5 fmol of pENTR_L4_Promoter_R1
+•	1uL of 5 fmol pENTR_L1_Gene_L2
+•	1uL of 10 fmol pDEST_R4_R2
+•	3uL Total
+WARNING: KEEP ALIQUOTED LR CLONASE MIX AT -80 AT ALL TIMES!
+Add 0.5uL LR Clonase Enzyme
+Additionally, remember to mix your reactions well after all elements have been added (use a 10 uL pipette set to 3 or 4 uL, then just pipette up and down gently)
+Leave at room temperature for minimum of 16 hours, maximum of 24 hours.
+transform just 1 uL of the reaction (This should result in around 50-500 colonies (more often than not closer to 500) with high (~90-95%) efficiency)
+or storage -20C freezer.
+
+
+Transformation
+Steps
+1.	Make sure that the incubator (30/37C) and heat block (42C) are ON
+2.	Make sure required antibiotic plates are present. Check the antibiotic resistance on the plasmid map in Vector NTI.
+3.	Take the DNA out of --20 frig, let it thaw
+4.	Make sure that all of the required reagents/DNA etc are present at the site of transformation before you take the cells out of the -80.
+5.	Thaw the competent cells on ice for 7-8 min.
+6.	Add 1.0 µl of DNA (about 10ng) into the liquid (Don’t vortex). Tap the sides of the tube to mix. If transforming multiple plasmids, add 10 ng of each.
+7.	Incubate the cells on ice for 30 min
+8.	Heat shock the cells for EXACTLY 30 sec at 42 C water bath.
+9.	Place on ice for 2 min.
+10.	Add 0.9ml of room temperature S.O.C medium to each tube (S.O.C is made by dissolving 0.5 ml of 20% glucose in 25 ml of SOB. Make sure that the SOC is clear and not cloudy/ contaminated.)
+11.	Shake the tubes at 37 C, 280 rpm for 60 min or 30 C for 90 min
+12.	Plate 20uL on one side of a plate
+13.	Spin remaining cells at 5000rpm for 1 min, pour off supernatant, resuspend cells in remaining liquid (DO NOT vortex) and plate on other side of plate.
+14.	Incubate plates upright for 20 min., then upside down overnight (12-14 h) at 37 C or 16-18h at 30C.
+Can leave the cells in the incubator for up to 18 hours but no more.
+
+Miniprep
+Before you Start:
+1.	Make sure provided RNase A solution has been added to Buffer P1 before use. One vial of RNase A per bottle of Buffer P1 to give final concentration of 100ug/mL. If you're the one adding, initial top and check box on cap!
+2.	Buffer P1 will be in the fridge.
+3.	Add ethanol to Buffer PE before use and then check mark on cap.
+4.	Check Buffers P2 and N3 for precipitates, if any redissolve by placing in water bath at 37C Do NOT vortex.
+5.	Add the provided LyseBlue reagent to Buffer P1 and mix before use. Use one vial LyseBlue per bottle of P1 to achieve 1:1000 dilution. If you're the one adding, initial top and check the box on cap.
+
+Steps
+1.	Transfer 1-5mL of overnight culture of plasmid cells into 2ml microcentrifuge collection tubes (1 per try) provided in the kit. Pellet for 1 min. Decant all the liquid and add 1 ml of the culture into the corresponding tube. Make sure not to mix up the tries.
+2.	Resuspend pelleted cells in 250 uL Buffer P1 and transfer to microcentrifuge tube.
+3.	Add 250uL Buffer P2 and mix thoroughly by inverting tube 4-6 times. Do NOT vortex. Mixture turns blue.
+4.	Add 350uL of Buffer N3 and mix IMMEDIATELY by inverting tube 4-6 times. Do NOT vortex. Mixture is no longer blue.
+5.	Centrifuge 10min at 13,000 rpm in table-top centrifuge.
+6.	Apply the supernatant to a QIAprep spin column by decanting. Do NOT get any of the sticky precipitate.
+7.	Centrifuge for 30 - 60s at 13000rpm. Discard flowthrough.
+8.	Wash the QIAprep column by adding 0.5 mL Buffer PB.
+9.	Centrifuge for 30 - 60s at 13000rpm. Discard flowthrough.
+10.	Wash the QIAprep column by adding 0.75 mL Buffer PE.
+11.	Centrifuge for 30 - 60s at 13000rpm. Discard flowthrough.
+12.	Place the QIAprep column in a clean 1.5mL microcentrifuge tube. To elute DNA, add 50uL Buffer EB to center of each column. Be careful NOT to pierce column.
+13.	Let stand for 1 minute.
+14.	Centrifuge for 60s at 13000rpm.
+15.	Remove column and discard, tube now contains DNA.
+16.	Go to NanoDrop and spec DNA.
+
+
