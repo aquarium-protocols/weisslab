@@ -11,16 +11,16 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      transformed_aliquots_ids: [9191,9190,8418],
+      transformed_aliquots_ids: [24,25,26],
       debug_mode: "No",
     }
   end
 
   def main
     io_hash = input[:io_hash]
-    io_hash = input if input[:io_hash].empty?
+    io_hash = input if !input[:io_hash] || input[:io_hash].empty?
 
-    io_hash = { plate_ids: [], debug_mode: "no" }.merge io_hash
+    io_hash = { plate_ids: [], transformed_aliquots_ids: [], debug_mode: "No" }.merge io_hash
 
     if io_hash[:debug_mode].downcase == "yes"
       def debug
@@ -28,7 +28,7 @@ class Protocol
       end
     end
 
-    all_transformed_aliquots = io_hash[:transformed_aliquots_ids].collect { |tid| find(:item, id: tid)[0] }
+    all_transformed_aliquots = io_hash[:transformed_aliquots_ids].collect { |id| find(:item, id: id)[0] }
     if all_transformed_aliquots.length == 0
       show {
         title "No plating required"
@@ -61,7 +61,7 @@ class Protocol
           title "Plating"
           check "Use sterile beads to plate 200 µL from transformed aliquots (1.5 mL tubes) on to the plates following the table below."
           check "Discard used transformed aliquots after plating."
-          table [["1.5 mL tube", "LB+#{marker[0].upcase}#{marker[1,2]} Plate"]].concat((transformed_aliquots.collect { |t| t.id }).zip plates.collect{ |p| { content: p.id, check: true } })
+          table [["Aliquot", "LB+#{marker[0].upcase}#{marker[1,2]} Plate"]].concat((transformed_aliquots.collect { |t| t.id }).zip plates.collect{ |p| { content: p.id, check: true } })
         }
       else
         show {

@@ -12,8 +12,8 @@ class Protocol
       #Enter the fragment sample ids as array of arrays, eg [[2058,2059],[2060,2061],[2058,2062]]
       entr_ids: [[1, 2], [1, 2]],
       #Tell the system if the ids you entered are sample ids or item ids by enter sample or item, sample is the default option in the protocol.
-      dest_ids: [3, 3]
-      dest_result_ids: [4, 4]
+      dest_ids: [3, 3],
+      dest_result_ids: [4, 4],
       #Enter correspoding plasmid id or fragment id for each fragment to be Gibsoned in.
       debug_mode: "Yes",
     }
@@ -26,11 +26,6 @@ class Protocol
     # setup default values for io_hash.
     io_hash = { entr_ids: [[]], dest_ids: [], dest_result_ids: [], debug_mode: "No" }.merge io_hash
 
-    # Check if inputs are correct
-    if !((io_hash[:entr_ids].length == io_hash[:dest_ids].length) && (io_hash[:entr_ids].length == io_hash[:dest_result_ids].length))
-      raise "Incorrect inputs, entr_ids, dest_ids, dest_result_ids need to have the same length"
-    end
-
     # Set debug based on debug_mode
     if io_hash[:debug_mode].downcase == "yes"
       def debug
@@ -38,8 +33,25 @@ class Protocol
       end
     end
 
-    entr_stocks = io_hash[:entr_ids].collect { |ids| ids.collect { |id| find(:sample,{id: id})[0].in("Plasmid Stock")[0] } }
-    dest_stocks = io_hash[:dest_ids].collect { |ids| ids.collect { |id| find(:sample,{id: id})[0].in("Plasmid Stock")[0] } }
+    # Check if inputs are correct
+    if !((io_hash[:entr_ids].length == io_hash[:dest_ids].length) && (io_hash[:entr_ids].length == io_hash[:dest_result_ids].length))
+      raise "Incorrect inputs, entr_ids, dest_ids, dest_result_ids need to have the same length"
+    end
+
+    err_messages = []
+
+    entr_stocks = io_hash[:entr_ids].collect { |ids|
+      ids.collect { |id|
+        err_messages.push "Sample #{id} does not have any stock" if !find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
+        find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
+      }
+    }
+    dest_stocks = io_hash[:dest_ids].collect { |id|
+      err_messages.push "Sample #{id} does not have any stock" if !find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
+      find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
+    }
+
+    raise err_messages.uniq.join(', ') if err_messages.length > 0
 
     # Flatten the entr_stocks array of arrays
     uniq_entr_stocks = entr_stocks.flatten.uniq
@@ -54,7 +66,7 @@ class Protocol
 
     stocks = uniq_entr_stocks + uniq_dest_stocks
 
-    # Take fragment stocks
+    # Take stocks
     take stocks, interactive: true,  method: "boxes"
 
     # Measure concentration
@@ -93,6 +105,10 @@ class Protocol
 
     # Dilute stocks
 
+    # Setup gateway reactions
+    dest_results = io_hash[:dest_result_ids].collect { |id| find(:sample,{ id: id })[0] }
+    stripwells = produce spread dest_results, "Stripwell", 1, 12
+
     # Prepare stripwells
     show {
       title "Prepare Stripwell Tubes"
@@ -105,10 +121,13 @@ class Protocol
       end
     }
 
-    # Setup gateway reactions
+    stripwells.each do |sw|
+      sw.location = "Bench"
+      sw.save
+    end
 
-    dest_results = io_hash[:dest_result_ids].collect { |id| find(:sample,{ id: id })[0] }
-    gateway_results = produce spread dest_results, "Stripwell", 1, 12
+    # Release stocks
+    release stocks, interactive: true,  method: "boxes"
 
     if io_hash[:task_ids]
       io_hash[:task_ids] = io_hash[:task_ids]
@@ -118,7 +137,7 @@ class Protocol
       end
     end
 
-    io_hash[:gateway_result_ids] = gateway_results.collect { |g| g.id }
+    io_hash[:gateway_result_ids] = stripwells.collect { |g| g.id }
     return { io_hash: io_hash }
   end
 

@@ -12,21 +12,25 @@ class Protocol
       io_hash: {},
       #Enter the plate ids as a list
       plate_ids: [35004,35005],
-      debug_mode: "Yes",
       image_option: "No",
+      debug_mode: "Yes",
       task_ids: []
     }
   end #arguments
 
   def main
     io_hash = input[:io_hash]
-    io_hash = input if input[:io_hash].empty?
-    io_hash = { image_option: "Yes" }.merge io_hash
+    io_hash = input if !input[:io_hash] || input[:io_hash].empty?
+
+    # setup default values for io_hash.
+    io_hash = { plate_ids: [], debug_mode: "No", image_option: "No" }.merge io_hash
+
     if io_hash[:debug_mode].downcase == "yes"
       def debug
         true
       end
     end
+
     plates = io_hash[:plate_ids].collect { |x| find(:item, id: x)[0] }
     take plates, interactive: true
 
