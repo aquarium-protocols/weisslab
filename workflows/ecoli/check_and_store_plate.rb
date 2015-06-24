@@ -150,7 +150,7 @@ class Protocol
           if plate_id > 0
 
             if colony_number[:"c#{plate_id}".to_sym] > 0
-              set_task_status(task,"imaged and stored in fridge")
+              set_task_status(task,"stored in fridge")
               # automatically submit plasmid verification tasks if sequencing_primer_ids are defined in plasmid sample
               plate = find(:item, id: plate_id)[0]
               primer_ids_str = plate.sample.properties["Sequencing_primer_ids"]
@@ -180,10 +180,10 @@ class Protocol
             t.save
             t.notify "Automatically created from Yeast Transformation.", job_id: jid
           end
-          set_task_status(task,"imaged and stored in fridge")
+          set_task_status(task,"stored in fridge")
 
         else
-          set_task_status(task,"imaged and stored in fridge")
+          set_task_status(task,"stored in fridge")
         end
 
       end # end io_hash[:task_ids].each_with_index do |tid,idx|
