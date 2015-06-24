@@ -11,7 +11,7 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      transformed_aliquots_ids: [24,25,26],
+      transformed_aliquot_ids: [24,25,26],
       debug_mode: "No",
     }
   end
@@ -20,7 +20,7 @@ class Protocol
     io_hash = input[:io_hash]
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
 
-    io_hash = { plate_ids: [], transformed_aliquots_ids: [], debug_mode: "No" }.merge io_hash
+    io_hash = { plate_ids: [], transformed_aliquot_ids: [], debug_mode: "No" }.merge io_hash
 
     if io_hash[:debug_mode].downcase == "yes"
       def debug
@@ -28,7 +28,7 @@ class Protocol
       end
     end
 
-    all_transformed_aliquots = io_hash[:transformed_aliquots_ids].collect { |id| find(:item, id: id)[0] }
+    all_transformed_aliquots = io_hash[:transformed_aliquot_ids].collect { |id| find(:item, id: id)[0] }
     if all_transformed_aliquots.length == 0
       show {
         title "No plating required"
