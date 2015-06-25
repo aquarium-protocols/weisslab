@@ -537,6 +537,7 @@ module Cloning
                 t.notify "Plasmid stock required for sample #{id}", job_id: jid
               elsif plasmid.in("Plasmid Stock").length > 0
                 t[:plasmids][ready].push id
+              end
             end
           end
           ready_conditions = t[:plasmids][:ready].length == t[:plasmid_ids].length

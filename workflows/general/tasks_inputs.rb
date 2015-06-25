@@ -226,113 +226,113 @@ class Protocol
 
     when "Fragment Construction"
 
-        # pull out fragments that need to be made from Gibson Assembly tasks
-        gibson_tasks = task_status name: "Gibson Assembly", group: io_hash[:group]
-        if gibson_tasks[:fragments][:need_to_build].length > 0
+      # pull out fragments that need to be made from Gibson Assembly tasks
+      gibson_tasks = task_status name: "Gibson Assembly", group: io_hash[:group]
+      if gibson_tasks[:fragments][:need_to_build].length > 0
 
-          need_to_make_fragment_ids = gibson_tasks[:fragments][:need_to_build].uniq
-          new_fragment_construction_ids = []
+        need_to_make_fragment_ids = gibson_tasks[:fragments][:need_to_build].uniq
+        new_fragment_construction_ids = []
 
-          need_to_make_fragment_ids.each do |id|
-            fragment = find(:sample, id: id)[0]
-            tp = TaskPrototype.where("name = 'Fragment Construction'")[0]
-            task = find(:task, name: "#{fragment.name}")[0]
-            if task
-              if task.status == "done"
-                set_task_status(task, "waiting")
-                task.notify "Automatically changed status to waiting to make more fragments", job_id: jid
-              end
-            else
-              t = Task.new(name: "#{fragment.name}", specification: { "fragments Fragment" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: fragment.user.id)
-              t.save
-              t.notify "Automatically created from Gibson Assembly.", job_id: jid
-              new_fragment_construction_ids.push t.id
+        need_to_make_fragment_ids.each do |id|
+          fragment = find(:sample, id: id)[0]
+          tp = TaskPrototype.where("name = 'Fragment Construction'")[0]
+          task = find(:task, name: "#{fragment.name}")[0]
+          if task
+            if task.status == "done"
+              set_task_status(task, "waiting")
+              task.notify "Automatically changed status to waiting to make more fragments", job_id: jid
             end
+          else
+            t = Task.new(name: "#{fragment.name}", specification: { "fragments Fragment" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: fragment.user.id)
+            t.save
+            t.notify "Automatically created from Gibson Assembly.", job_id: jid
+            new_fragment_construction_ids.push t.id
           end
-
-          new_fragment_construction_ids.compact!
-
-          if new_fragment_construction_ids.length > 0
-            new_fragment_construction_tasks_tab = task_info_table(new_fragment_construction_ids)
-            show {
-              title "New fragment Construction tasks"
-              note "The following fragment Construction tasks are automatically generated for fragments that need to be built in Gibson Assemblies."
-              table new_fragment_construction_tasks_tab
-            }
-          end
-
         end
 
-        fs = task_status name: "Fragment Construction", group: io_hash[:group], notification: "on"
-        need_to_order_primer_ids = missing_primer(fs[:fragments][:not_ready_to_build].uniq)
-        new_primer_order_ids = []
+        new_fragment_construction_ids.compact!
 
-        need_to_order_primer_ids.each do |id|
-          primer = find(:sample, id: id)[0]
-          tp = TaskPrototype.where("name = 'Primer Order'")[0]
-          t = Task.new(name: "#{primer.name}", specification: { "primer_ids Primer" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: primer.user.id)
-          t.save
-          t.notify "Automatically created from Fragment Construction.", job_id: jid
-          new_primer_order_ids.push t.id
-        end
-
-        new_primer_order_ids.compact!
-
-        if new_primer_order_ids.length > 0
-          new_primer_order_tab = task_info_table(new_primer_order_ids)
+        if new_fragment_construction_ids.length > 0
+          new_fragment_construction_tasks_tab = task_info_table(new_fragment_construction_ids)
           show {
-            title "New Primer Order tasks"
-            note "The following Primer Order tasks are automatically generated for primers that need to be ordered from Fragment Constructions."
-            table new_primer_order_tab
+            title "New fragment Construction tasks"
+            note "The following fragment Construction tasks are automatically generated for fragments that need to be built in Gibson Assemblies."
+            table new_fragment_construction_tasks_tab
           }
         end
 
-        # pull out fragments from Fragment Construction tasks and cut off based on limits for non tech groups
-        io_hash[:task_ids] = fs[:ready_ids]
-        sizes, fragment_ids = [], []
-        io_hash[:task_ids].each do |tid|
-          task = find(:task, id: tid)[0]
-          fragment_ids.concat task.simple_spec[:fragments]
-          fragment_ids.uniq!
-          sizes.push fragment_ids.length
-        end
+      end
 
-        tetra_all_tab = [[ "size", "PCR","run_gel","cut_gel","purify_gel" ]]
-        sizes.each do |size|
-          job_times = []
-          ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
-            job_times.push time_prediction(size, protocol_name)
-          end
-          tetra_all_tab.push([size].concat job_times)
-        end
-        size_limit = task_size_select(io_hash[:task_name], sizes, tetra_all_tab)
+      fs = task_status name: "Fragment Construction", group: io_hash[:group], notification: "on"
+      need_to_order_primer_ids = missing_primer(fs[:fragments][:not_ready_to_build].uniq)
+      new_primer_order_ids = []
 
-        limit_idx = 0
-        io_hash[:task_ids].each_with_index do |tid,idx|
-          task = find(:task, id: tid)[0]
-          io_hash[:fragment_ids].concat task.simple_spec[:fragments]
-          io_hash[:fragment_ids].uniq!
-          if io_hash[:fragment_ids].length >= size_limit
-            limit_idx = idx + 1
-            break
-          end
-        end
-        io_hash[:task_ids] = io_hash[:task_ids].take(limit_idx)
-        io_hash[:size] = io_hash[:fragment_ids].length
+      need_to_order_primer_ids.each do |id|
+        primer = find(:sample, id: id)[0]
+        tp = TaskPrototype.where("name = 'Primer Order'")[0]
+        t = Task.new(name: "#{primer.name}", specification: { "primer_ids Primer" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: primer.user.id)
+        t.save
+        t.notify "Automatically created from Fragment Construction.", job_id: jid
+        new_primer_order_ids.push t.id
+      end
 
-        # adding Tetra (time estimation tool for Aquarium) display
-        tetra_tab = [[ "Protocol Name", "Esitmated Time (min)"]]
+      new_primer_order_ids.compact!
 
-        ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
-          tetra_tab.push [protocol_name, time_prediction(io_hash[:size], protocol_name)]
-        end
-
+      if new_primer_order_ids.length > 0
+        new_primer_order_tab = task_info_table(new_primer_order_ids)
         show {
-          title "Tetra time predictions"
-          note "There is #{io_hash[:size]} #{io_hash[:task_name]} to do. Tetra prediction for
-          each job duration in minutes is following."
-          table tetra_tab
+          title "New Primer Order tasks"
+          note "The following Primer Order tasks are automatically generated for primers that need to be ordered from Fragment Constructions."
+          table new_primer_order_tab
         }
+      end
+
+      # pull out fragments from Fragment Construction tasks and cut off based on limits for non tech groups
+      io_hash[:task_ids] = fs[:ready_ids]
+      sizes, fragment_ids = [], []
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        fragment_ids.concat task.simple_spec[:fragments]
+        fragment_ids.uniq!
+        sizes.push fragment_ids.length
+      end
+
+      tetra_all_tab = [[ "size", "PCR","run_gel","cut_gel","purify_gel" ]]
+      sizes.each do |size|
+        job_times = []
+        ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
+          job_times.push time_prediction(size, protocol_name)
+        end
+        tetra_all_tab.push([size].concat job_times)
+      end
+      size_limit = task_size_select(io_hash[:task_name], sizes, tetra_all_tab)
+
+      limit_idx = 0
+      io_hash[:task_ids].each_with_index do |tid,idx|
+        task = find(:task, id: tid)[0]
+        io_hash[:fragment_ids].concat task.simple_spec[:fragments]
+        io_hash[:fragment_ids].uniq!
+        if io_hash[:fragment_ids].length >= size_limit
+          limit_idx = idx + 1
+          break
+        end
+      end
+      io_hash[:task_ids] = io_hash[:task_ids].take(limit_idx)
+      io_hash[:size] = io_hash[:fragment_ids].length
+
+      # adding Tetra (time estimation tool for Aquarium) display
+      tetra_tab = [[ "Protocol Name", "Esitmated Time (min)"]]
+
+      ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
+        tetra_tab.push [protocol_name, time_prediction(io_hash[:size], protocol_name)]
+      end
+
+      show {
+        title "Tetra time predictions"
+        note "There is #{io_hash[:size]} #{io_hash[:task_name]} to do. Tetra prediction for
+        each job duration in minutes is following."
+        table tetra_tab
+      }
 
     when "Glycerol Stock"
       io_hash[:task_ids].each do |tid|
