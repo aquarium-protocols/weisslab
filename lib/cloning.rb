@@ -542,6 +542,10 @@ module Cloning
           t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
         end
 
+        show {
+          note t[:plasmids][:not_ready]
+        }
+
         ready_conditions = t[:plasmids][:not_ready].length != 0
 
       when "Plasmid Verification"
