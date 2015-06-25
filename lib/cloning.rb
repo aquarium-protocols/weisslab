@@ -528,22 +528,22 @@ module Cloning
         t[:plasmid_ids].each do |id|
           plasmid = find(:sample, id: id)[0]
           if plasmid == nil
-            t[:plasmids][not_ready].push id
+            t[:plasmids][:not_ready].push id
             t.notify "Sample #{id} is not a valid.", job_id: jid
           else
             marker = plasmid.properties["Bacterial Marker"] || ""
             if marker.empty?
-              t[:plasmids][not_ready].push id
+              t[:plasmids][:not_ready].push id
               t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
             elsif plasmid.in("Plasmid Stock").length == 0
-              t[:plasmids][not_ready].push id
+              t[:plasmids][:not_ready].push id
               t.notify "Plasmid stock required for sample #{id}", job_id: jid
             elsif plasmid.in("Plasmid Stock").length > 0
-              t[:plasmids][ready].push id
+              t[:plasmids][:ready].push id
             end
           end
         end
-        
+
         ready_conditions = (t[:plasmids][:ready].length == t[:plasmid_ids].length) && size_check
 
       when "Plasmid Verification"
