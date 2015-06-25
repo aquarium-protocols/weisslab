@@ -540,7 +540,8 @@ module Cloning
               end
             end
           end
-          ready_conditions = t[:plasmids][:ready].length == t[:plasmid_ids].length
+        end
+        ready_conditions = t[:plasmids][:ready].length == t[:plasmid_ids].length
 
       when "Plasmid Verification"
         length_check = t.simple_spec[:plate_ids].length == t.simple_spec[:num_colonies].length && t.simple_spec[:plate_ids].length == t.simple_spec[:primer_ids].length
