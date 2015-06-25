@@ -516,28 +516,30 @@ module Cloning
         ready_conditions = t[:fragments][:ready_to_use].length == t.simple_spec[:fragments].length && plasmid_condition
 
       when "Gateway Cloning"
-        t[:plasmids] = { ready: [], not_ready: []}
+        t[:plasmids] = { ready: [], not_ready: [] }
         t[:plasmid_ids] = t.simple_spec[:ENTRs] + [t.simple_spec[:DEST]] + [t.simple_spec[:DEST_result]]
         if t.simple_spec[:ENTRs].length != 2
           t[:plasmids][:not_ready].concat t[:plasmid_ids]
           t.notify "ENTRs needs to be size of 2", job_id: jid
-        else
-          t[:plasmid_id].each do |id|
-            plasmid = find(:sample, id: id)[0]
-            if plasmid == nil
+        end
+        show {
+          note t[:plasmid_ids]
+        }
+        t[:plasmid_id].each do |id|
+          plasmid = find(:sample, id: id)[0]
+          if plasmid == nil
+            t[:plasmids][not_ready].push id
+            t.notify "Sample #{id} is not a valid.", job_id: jid
+          else
+            marker = plasmid.properties["Bacterial Marker"] || ""
+            if marker.empty?
               t[:plasmids][not_ready].push id
-              t.notify "Sample #{id} is not a valid.", job_id: jid
-            else
-              marker = plasmid.properties["Bacterial Marker"] || ""
-              if marker.empty?
-                t[:plasmids][not_ready].push id
-                t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
-              elsif plasmid.in("Plasmid Stock").length == 0
-                t[:plasmids][not_ready].push id
-                t.notify "Plasmid stock required for sample #{id}", job_id: jid
-              elsif plasmid.in("Plasmid Stock").length > 0
-                t[:plasmids][ready].push id
-              end
+              t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
+            elsif plasmid.in("Plasmid Stock").length == 0
+              t[:plasmids][not_ready].push id
+              t.notify "Plasmid stock required for sample #{id}", job_id: jid
+            elsif plasmid.in("Plasmid Stock").length > 0
+              t[:plasmids][ready].push id
             end
           end
         end
