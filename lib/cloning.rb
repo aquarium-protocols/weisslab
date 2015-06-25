@@ -542,7 +542,7 @@ module Cloning
           t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
         end
 
-        ready_conditions = t[:not_ready].length != 0
+        ready_conditions = t[:plasmids][:not_ready].length != 0
 
       when "Plasmid Verification"
         length_check = t.simple_spec[:plate_ids].length == t.simple_spec[:num_colonies].length && t.simple_spec[:plate_ids].length == t.simple_spec[:primer_ids].length
