@@ -518,14 +518,14 @@ module Cloning
       when "Gateway Cloning"
         t[:plasmids] = { ready: [], not_ready: [] }
         t[:plasmid_ids] = t.simple_spec[:ENTRs] + [t.simple_spec[:DEST]] + [t.simple_spec[:DEST_result]]
+
+        size_check = true
         if t.simple_spec[:ENTRs].length != 2
-          t[:plasmids][:not_ready].concat t[:plasmid_ids]
+          size_check = false
           t.notify "ENTRs needs to be size of 2", job_id: jid
         end
-        show {
-          note t[:plasmid_ids]
-        }
-        t[:plasmid_id].each do |id|
+
+        t[:plasmid_ids].each do |id|
           plasmid = find(:sample, id: id)[0]
           if plasmid == nil
             t[:plasmids][not_ready].push id
@@ -543,7 +543,8 @@ module Cloning
             end
           end
         end
-        ready_conditions = t[:plasmids][:ready].length == t[:plasmid_ids].length
+        
+        ready_conditions = (t[:plasmids][:ready].length == t[:plasmid_ids].length) && size_check
 
       when "Plasmid Verification"
         length_check = t.simple_spec[:plate_ids].length == t.simple_spec[:num_colonies].length && t.simple_spec[:plate_ids].length == t.simple_spec[:primer_ids].length
