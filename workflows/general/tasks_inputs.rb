@@ -157,7 +157,7 @@ class Protocol
     {
       io_hash: {},
       debug_mode: "Yes",
-      task_name: "Gibson Assembly",
+      task_name: "Gateway Cloning",
       group: "technicians"
     }
   end
