@@ -516,35 +516,33 @@ module Cloning
         ready_conditions = t[:fragments][:ready_to_use].length == t.simple_spec[:fragments].length && plasmid_condition
 
       when "Gateway Cloning"
-        t[:plasmids] = { ready: [], not_ready: [] }
-        t[:plasmid_ids] = t.simple_spec[:ENTRs] + [t.simple_spec[:DEST]] + [t.simple_spec[:DEST_result]]
+        t[:plasmids] = { not_ready: [] }
+        t[:input_plasmid_ids] = t.simple_spec[:ENTRs] + [t.simple_spec[:DEST]]
 
-        size_check = true
         if t.simple_spec[:ENTRs].length != 2
-          size_check = false
+          t[:plasmids][:not_ready].push t.simple_spec[:ENTRs]
           t.notify "ENTRs needs to be size of 2", job_id: jid
         end
 
-        t[:plasmid_ids].each do |id|
+        t[:input_plasmid_ids].each do |id|
           plasmid = find(:sample, id: id)[0]
           if plasmid == nil
             t[:plasmids][:not_ready].push id
             t.notify "Sample #{id} is not a valid.", job_id: jid
-          else
-            marker = plasmid.properties["Bacterial Marker"] || ""
-            if marker.empty?
-              t[:plasmids][:not_ready].push id
-              t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
-            elsif plasmid.in("Plasmid Stock").length == 0
-              t[:plasmids][:not_ready].push id
-              t.notify "Plasmid stock required for sample #{id}", job_id: jid
-            elsif plasmid.in("Plasmid Stock").length > 0
-              t[:plasmids][:ready].push id
-            end
+          elsif plasmid.in("Plasmid Stock").length == 0
+            t[:plasmids][:not_ready].push id
+            t.notify "Plasmid stock required for sample #{id}", job_id: jid
           end
         end
 
-        ready_conditions = (t[:plasmids][:ready].length == t[:plasmid_ids].length) && size_check
+        output_plasmid = find(:sample, id: t.simple_spec[:DEST_result])[0]
+        marker = output_plasmid.properties["Bacterial Marker"] || ""
+        if marker.empty?
+          t[:plasmids][:not_ready].push id
+          t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
+        end
+
+        ready_conditions = t[:not_ready].length != 0
 
       when "Plasmid Verification"
         length_check = t.simple_spec[:plate_ids].length == t.simple_spec[:num_colonies].length && t.simple_spec[:plate_ids].length == t.simple_spec[:primer_ids].length
