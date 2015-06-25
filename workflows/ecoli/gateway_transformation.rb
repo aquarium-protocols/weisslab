@@ -9,7 +9,7 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      "gateway_result_ids Stripwell" => [7,6],
+      "gateway_result_ids Stripwell" => [45,45],
       debug_mode: "Yes",
       cell_type: "DB3.1"
     }
@@ -38,6 +38,12 @@ class Protocol
     transformed_aliquots = io_hash[:plasmid_ids].collect { |id| produce new_sample find(:sample, id: id)[0].name, of: "Plasmid", as: "Transformed E. coli Aliquot"}
 
     take stripwells, interactive: true
+
+    show {
+      title "Incubate"
+      note "Place the followng tube in a 37 C shaker incubator"
+      note transformed_aliquots.collect { |t| "#{t}" }.join(', ')
+    }
 
     move transformed_aliquots, "37 C incubator"
 
