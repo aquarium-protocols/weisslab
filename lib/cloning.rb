@@ -446,17 +446,6 @@ module Cloning
 
       case params[:name]
 
-      when "Glycerol Stock"
-        t[:item_ids] = { ready: [], not_valid: [] }
-        t.simple_spec[:item_ids].each do |id|
-          if find(:item, id: id)[0].object_type.name.downcase.include? "overnight" or find(:item, id: id)[0].object_type.name.downcase.include? "plate"
-            t[:item_ids][:ready].push id
-          else
-            t[:item_ids][:not_valid].push id
-          end
-        end
-        ready_conditions = t[:item_ids][:ready].length == t.simple_spec[:item_ids].length
-
       when "Discard Item"
         t[:item_ids] = { belong_to_user: [], not_belong_to_user: [] }
         t.simple_spec[:item_ids].each do |id|
@@ -468,16 +457,30 @@ module Cloning
         end
         ready_conditions = t[:item_ids][:belong_to_user].length == t.simple_spec[:item_ids].length
 
-      when "Streak Plate"
-        t[:item_ids] = { ready: [], not_ready: [] }
-        accepted_object_types = ["Yeast Glycerol Stock", "Yeast Plate", "Plate"]
+      when "Fragment Construction"
+        t[:fragments] = { ready_to_build: [], not_ready_to_build: [] }
+        t.simple_spec[:fragments].each do |fid|
+          if params[:notification].downcase == "off"
+            info = fragment_info fid, check_mode: true
+          else
+            info = fragment_info fid, task_id: t.id, check_mode: true
+          end
+
+          if !info
+            t[:fragments][:not_ready_to_build].push fid
+          else
+            t[:fragments][:ready_to_build].push fid
+          end
+        end
+        ready_conditions = t[:fragments][:ready_to_build].length == t.simple_spec[:fragments].length
+
+      when "Glycerol Stock"
+        t[:item_ids] = { ready: [], not_valid: [] }
         t.simple_spec[:item_ids].each do |id|
-          if find(:item, id: id)[0]
-            if accepted_object_types.include? find(:item, id: id)[0].object_type.name
-              t[:item_ids][:ready].push id
-            else
-              t[:item_ids][:not_ready].push id
-            end
+          if find(:item, id: id)[0].object_type.name.downcase.include? "overnight" or find(:item, id: id)[0].object_type.name.downcase.include? "plate"
+            t[:item_ids][:ready].push id
+          else
+            t[:item_ids][:not_valid].push id
           end
         end
         ready_conditions = t[:item_ids][:ready].length == t.simple_spec[:item_ids].length
@@ -512,22 +515,31 @@ module Cloning
         end
         ready_conditions = t[:fragments][:ready_to_use].length == t.simple_spec[:fragments].length && plasmid_condition
 
-      when "Fragment Construction"
-        t[:fragments] = { ready_to_build: [], not_ready_to_build: [] }
-        t.simple_spec[:fragments].each do |fid|
-          if params[:notification].downcase == "off"
-            info = fragment_info fid, check_mode: true
-          else
-            info = fragment_info fid, task_id: t.id, check_mode: true
+      when "Gateway Cloning"
+        t[:plasmids] = { ready: [], not_ready: []}
+        t[:plasmid_ids] = t.simple_spec[:ENTRs] + [t.simple_spec[:DEST]] + [t.simple_spec[:DEST_result]]
+        if t.simple_spec[:ENTRs].length != 2
+          t[:plasmids][:not_ready].concat t[:plasmid_ids]
+          t.notify "ENTRs needs to be size of 2", job_id: jid
+        else
+          t[:plasmid_id].each do |id|
+            plasmid = find(:sample, id: id)[0]
+            if plasmid == nil
+              t[:plasmids][not_ready].push id
+              t.notify "Sample #{id} is not a valid.", job_id: jid
+            else
+              marker = plasmid.properties["Bacterial Marker"] || ""
+              if marker.empty?
+                t[:plasmids][not_ready].push id
+                t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
+              elsif plasmid.in("Plasmid Stock").length == 0
+                t[:plasmids][not_ready].push id
+                t.notify "Plasmid stock required for sample #{id}", job_id: jid
+              elsif plasmid.in("Plasmid Stock").length > 0
+                t[:plasmids][ready].push id
+            end
           end
-
-          if !info
-            t[:fragments][:not_ready_to_build].push fid
-          else
-            t[:fragments][:ready_to_build].push fid
-          end
-        end
-        ready_conditions = t[:fragments][:ready_to_build].length == t.simple_spec[:fragments].length
+          ready_conditions = t[:plasmids][:ready].length == t[:plasmid_ids].length
 
       when "Plasmid Verification"
         length_check = t.simple_spec[:plate_ids].length == t.simple_spec[:num_colonies].length && t.simple_spec[:plate_ids].length == t.simple_spec[:primer_ids].length
@@ -571,6 +583,36 @@ module Cloning
         end
 
         ready_conditions = length_check && t[:plate_ids][:ready].length == t.simple_spec[:plate_ids].length && t[:primers][:ready].length == primer_ids.length
+
+      when "Sequencing"
+        t[:primers] = { ready: [], no_aliquot: [] }
+
+        primer_ids = t.simple_spec[:primer_ids].flatten.uniq
+
+        primer_ids.each do |prid|
+          if find(:sample, id: prid)[0].in("Primer Aliquot").length > 0
+            t[:primers][:ready].push prid
+          else
+            t[:primers][:no_aliquot].push prid
+            t.notify "Primer #{prid} has no primer aliquot.", job_id: jid
+          end
+        end
+
+        ready_conditions = t[:primers][:ready].length == primer_ids.length && find(:item, id: t.simple_spec[:plasmid_stock_id])
+
+      when "Streak Plate"
+        t[:item_ids] = { ready: [], not_ready: [] }
+        accepted_object_types = ["Yeast Glycerol Stock", "Yeast Plate", "Plate"]
+        t.simple_spec[:item_ids].each do |id|
+          if find(:item, id: id)[0]
+            if accepted_object_types.include? find(:item, id: id)[0].object_type.name
+              t[:item_ids][:ready].push id
+            else
+              t[:item_ids][:not_ready].push id
+            end
+          end
+        end
+        ready_conditions = t[:item_ids][:ready].length == t.simple_spec[:item_ids].length
 
       when "Yeast Transformation"
         t[:yeast_strains] = { ready_to_build: [], not_ready_to_build: [] }
@@ -631,22 +673,6 @@ module Cloning
         end
 
         ready_conditions = length_check && t[:yeast_plate_ids][:ready_to_QC].length == t.simple_spec[:yeast_plate_ids].length
-
-      when "Sequencing"
-        t[:primers] = { ready: [], no_aliquot: [] }
-
-        primer_ids = t.simple_spec[:primer_ids].flatten.uniq
-
-        primer_ids.each do |prid|
-          if find(:sample, id: prid)[0].in("Primer Aliquot").length > 0
-            t[:primers][:ready].push prid
-          else
-            t[:primers][:no_aliquot].push prid
-            t.notify "Primer #{prid} has no primer aliquot.", job_id: jid
-          end
-        end
-
-        ready_conditions = t[:primers][:ready].length == primer_ids.length && find(:item, id: t.simple_spec[:plasmid_stock_id])
 
       when "Yeast Mating"
         t[:yeast_strains] = { ready: [], not_valid:[] }

@@ -203,6 +203,137 @@ class Protocol
 
     case io_hash[:task_name]
 
+    when "Discard Item"
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        io_hash[:item_ids].concat task.simple_spec[:item_ids]
+      end
+
+      # Find sequencing verification wrong tasks that belongs to io_hash[:group]
+      seq_verifi_tasks = find(:task, { task_prototype: { name: "Sequencing Verification" } })
+      wrong_seq_verifi_tasks = seq_verifi_tasks.select { |t| t.status == "sequence wrong" }
+      wrong_seq_verifi_task_ids = wrong_seq_verifi_tasks.collect { |t| t.id }
+      wrong_seq_verifi_task_ids = task_group_filter wrong_seq_verifi_task_ids, io_hash[:group]
+
+      # Add sequence wrong items to discard item
+      wrong_seq_verifi_task_ids.each do |tid|
+        io_hash[:task_ids].push tid
+        task = find(:task, id: tid)[0]
+        io_hash[:item_ids].concat task.simple_spec[:plasmid_stock_ids]
+        io_hash[:item_ids].concat task.simple_spec[:overnight_ids]
+      end
+      io_hash[:size] = io_hash[:item_ids].length
+
+    when "Fragment Construction"
+
+        # pull out fragments that need to be made from Gibson Assembly tasks
+        gibson_tasks = task_status name: "Gibson Assembly", group: io_hash[:group]
+        if gibson_tasks[:fragments][:need_to_build].length > 0
+
+          need_to_make_fragment_ids = gibson_tasks[:fragments][:need_to_build].uniq
+          new_fragment_construction_ids = []
+
+          need_to_make_fragment_ids.each do |id|
+            fragment = find(:sample, id: id)[0]
+            tp = TaskPrototype.where("name = 'Fragment Construction'")[0]
+            task = find(:task, name: "#{fragment.name}")[0]
+            if task
+              if task.status == "done"
+                set_task_status(task, "waiting")
+                task.notify "Automatically changed status to waiting to make more fragments", job_id: jid
+              end
+            else
+              t = Task.new(name: "#{fragment.name}", specification: { "fragments Fragment" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: fragment.user.id)
+              t.save
+              t.notify "Automatically created from Gibson Assembly.", job_id: jid
+              new_fragment_construction_ids.push t.id
+            end
+          end
+
+          new_fragment_construction_ids.compact!
+
+          if new_fragment_construction_ids.length > 0
+            new_fragment_construction_tasks_tab = task_info_table(new_fragment_construction_ids)
+            show {
+              title "New fragment Construction tasks"
+              note "The following fragment Construction tasks are automatically generated for fragments that need to be built in Gibson Assemblies."
+              table new_fragment_construction_tasks_tab
+            }
+          end
+
+        end
+
+        fs = task_status name: "Fragment Construction", group: io_hash[:group], notification: "on"
+        need_to_order_primer_ids = missing_primer(fs[:fragments][:not_ready_to_build].uniq)
+        new_primer_order_ids = []
+
+        need_to_order_primer_ids.each do |id|
+          primer = find(:sample, id: id)[0]
+          tp = TaskPrototype.where("name = 'Primer Order'")[0]
+          t = Task.new(name: "#{primer.name}", specification: { "primer_ids Primer" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: primer.user.id)
+          t.save
+          t.notify "Automatically created from Fragment Construction.", job_id: jid
+          new_primer_order_ids.push t.id
+        end
+
+        new_primer_order_ids.compact!
+
+        if new_primer_order_ids.length > 0
+          new_primer_order_tab = task_info_table(new_primer_order_ids)
+          show {
+            title "New Primer Order tasks"
+            note "The following Primer Order tasks are automatically generated for primers that need to be ordered from Fragment Constructions."
+            table new_primer_order_tab
+          }
+        end
+
+        # pull out fragments from Fragment Construction tasks and cut off based on limits for non tech groups
+        io_hash[:task_ids] = fs[:ready_ids]
+        sizes, fragment_ids = [], []
+        io_hash[:task_ids].each do |tid|
+          task = find(:task, id: tid)[0]
+          fragment_ids.concat task.simple_spec[:fragments]
+          fragment_ids.uniq!
+          sizes.push fragment_ids.length
+        end
+
+        tetra_all_tab = [[ "size", "PCR","run_gel","cut_gel","purify_gel" ]]
+        sizes.each do |size|
+          job_times = []
+          ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
+            job_times.push time_prediction(size, protocol_name)
+          end
+          tetra_all_tab.push([size].concat job_times)
+        end
+        size_limit = task_size_select(io_hash[:task_name], sizes, tetra_all_tab)
+
+        limit_idx = 0
+        io_hash[:task_ids].each_with_index do |tid,idx|
+          task = find(:task, id: tid)[0]
+          io_hash[:fragment_ids].concat task.simple_spec[:fragments]
+          io_hash[:fragment_ids].uniq!
+          if io_hash[:fragment_ids].length >= size_limit
+            limit_idx = idx + 1
+            break
+          end
+        end
+        io_hash[:task_ids] = io_hash[:task_ids].take(limit_idx)
+        io_hash[:size] = io_hash[:fragment_ids].length
+
+        # adding Tetra (time estimation tool for Aquarium) display
+        tetra_tab = [[ "Protocol Name", "Esitmated Time (min)"]]
+
+        ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
+          tetra_tab.push [protocol_name, time_prediction(io_hash[:size], protocol_name)]
+        end
+
+        show {
+          title "Tetra time predictions"
+          note "There is #{io_hash[:size]} #{io_hash[:task_name]} to do. Tetra prediction for
+          each job duration in minutes is following."
+          table tetra_tab
+        }
+
     when "Glycerol Stock"
       io_hash[:task_ids].each do |tid|
         task = find(:task, id: tid)[0]
@@ -256,110 +387,17 @@ class Protocol
 
       io_hash[:size] = io_hash[:overnight_ids].length + io_hash[:item_ids].length
 
-    when "Discard Item"
+    when "Gateway Cloning"
+      io_hash = { entr_ids: [], dest_ids: [], dest_result_ids: [] }.merge io_hash
       io_hash[:task_ids].each do |tid|
         task = find(:task, id: tid)[0]
-        io_hash[:item_ids].concat task.simple_spec[:item_ids]
+        io_hash[:entr_ids].push task.simple_spec[:ENTRs]
+        io_hash[:dest_ids].push task.simple_spec[:DEST]
+        io_hash[:dest_result_ids].push task.simple_spec[:DEST_result]
       end
-
-      # Find sequencing verification wrong tasks that belongs to io_hash[:group]
-      seq_verifi_tasks = find(:task, { task_prototype: { name: "Sequencing Verification" } })
-      wrong_seq_verifi_tasks = seq_verifi_tasks.select { |t| t.status == "sequence wrong" }
-      wrong_seq_verifi_task_ids = wrong_seq_verifi_tasks.collect { |t| t.id }
-      wrong_seq_verifi_task_ids = task_group_filter wrong_seq_verifi_task_ids, io_hash[:group]
-
-      # Add sequence wrong items to discard item
-      wrong_seq_verifi_task_ids.each do |tid|
-        io_hash[:task_ids].push tid
-        task = find(:task, id: tid)[0]
-        io_hash[:item_ids].concat task.simple_spec[:plasmid_stock_ids]
-        io_hash[:item_ids].concat task.simple_spec[:overnight_ids]
-      end
-      io_hash[:size] = io_hash[:item_ids].length
-
-    when "Streak Plate"
-      yeast_competent_cells = task_status name: "Yeast Competent Cell", group: io_hash[:group]
-      need_to_streak_glycerol_stocks = []
-      if yeast_competent_cells[:yeast_strains][:ready_to_streak].length > 0
-        yeast_competent_cells[:yeast_strains][:ready_to_streak].each do |yid|
-          y = find(:sample, id: yid)[0]
-          y_stocks = y.in("Yeast Glycerol Stock")
-          need_to_streak_glycerol_stocks.push y_stocks[0].id
-        end
-
-        new_streak_plate_task_ids = []
-        need_to_streak_glycerol_stocks.each do |id|
-          y = find(:item, id: id)[0]
-          tp = TaskPrototype.where("name = 'Streak Plate'")[0]
-          task = find(:task, name: "#{y.sample.name}_streak_plate")[0]
-          # check if task already exists, if so, reset its status to waiting, if not, create new tasks.
-          if task
-            if task.status == "imaged and stored in fridge"
-              set_task_status(task,"waiting")
-              task.notify "Automatically changed status to waiting to make more competent cells as needed from Yeast Transformation.", job_id: jid
-              task.save
-            end
-          else
-            t = Task.new(name: "#{y.sample.name}_streak_plate", specification: { "item_ids Yeast Glycerol Stock" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: y.sample.user.id)
-            t.save
-            t.notify "Automatically created from Yeast Competent Cell.", job_id: jid
-            new_streak_plate_task_ids.push t.id
-          end
-        end
-
-        if new_streak_plate_task_ids.length > 0
-          new_streak_plate_tab = task_info_table(new_streak_plate_task_ids)
-          show {
-            title "New Streak Plate tasks"
-            note "The following Streak Plate tasks are automatically generated for yeast strains that need to streak plate in Yeast Competent Cell tasks."
-            table new_streak_plate_tab
-          }
-        end
-      end
-
-      streak_plate_tasks = task_status name: "Streak Plate", group: io_hash[:group]
-      io_hash[:task_ids] = streak_plate_tasks[:ready_ids]
-      io_hash[:yeast_glycerol_stock_ids] = []
-      io_hash[:task_ids].each do |tid|
-        task = find(:task, id: tid)[0]
-        task.simple_spec[:item_ids].each do |id|
-          if find(:item, id: id)[0].object_type.name == "Yeast Glycerol Stock"
-            io_hash[:yeast_glycerol_stock_ids].push id
-          elsif ["Yeast Plate", "Plate"].include? find(:item, id: id)[0].object_type.name
-            io_hash[:plate_ids].concat task.simple_spec[:item_ids]
-          else
-            io_hash[:item_ids].concat task.simple_spec[:item_ids]
-          end
-        end
-      end
-      io_hash[:size] = io_hash[:yeast_glycerol_stock_ids].length + io_hash[:plate_ids].length
+      io_hash[:size] = io_hash[:dest_result_ids].length
 
     when "Gibson Assembly"
-      # if tasks[:fragments]
-      #   waiting_ids = tasks[:waiting_ids]
-      #   users = waiting_ids.collect { |tid| find(:task, id: tid)[0].user.name }
-      #   fragment_ids = waiting_ids.collect { |tid| find(:task, id: tid)[0].simple_spec[:fragments] }
-      #   ready_to_use_fragment_ids = tasks[:fragments][:ready_to_use].uniq
-      #   not_ready_to_use_fragment_ids = tasks[:fragments][:not_ready_to_use].uniq
-      #   ready_to_build_fragment_ids = tasks[:fragments][:ready_to_build].uniq
-      #   not_ready_to_build_fragment_ids = tasks[:fragments][:not_ready_to_build].uniq
-      #   plasmid_ids = waiting_ids.collect { |tid| find(:task, id: tid)[0].simple_spec[:plasmid] }
-      #   plasmids = plasmid_ids.collect { |pid| find(:sample, id: pid)[0]}
-      #   tasks_tab = [[ "Not ready tasks", "Tasks owner", "Plasmid", "Fragments", "Ready to build", "Not ready to build", "Length info missing" ]]
-      #   waiting_ids.each_with_index do |tid,idx|
-      #     tasks_tab.push [ tid, users[idx], "#{plasmids[idx]}", fragment_ids[idx].to_s, (fragment_ids[idx]&ready_to_build_fragment_ids).to_s, (fragment_ids[idx]&not_ready_to_build_fragment_ids).to_s,(fragment_ids[idx]&not_ready_to_use_fragment_ids).to_s ]
-      #   end
-      #   show {
-      #     title "Gibson Assemby Status"
-      #     note "Ready to build means recipes and ingredients for building this fragments are complete."
-      #     note "Not ready to build means some information or stocks are missing."
-      #     note "Length info missing means the fragment are already in stock but does not have length information needed for Gibson assembly."
-      #     table tasks_tab
-      #   }
-      # end
-      # if io_hash[:group] != "technicians"
-      #   io_hash[:task_ids] = io_hash[:task_ids].take(12)
-      # end
       # adding Tetra (time estimation tool for Aquarium) display
       sizes = (1..io_hash[:task_ids].length).to_a
       tetra_tab = [[ "size", "gibson"]]
@@ -374,134 +412,6 @@ class Protocol
         io_hash[:plasmid_ids].push task.simple_spec[:plasmid]
       end
       io_hash[:size] = io_hash[:plasmid_ids].length
-
-    when "Fragment Construction"
-
-      # pull out fragments that need to be made from Gibson Assembly tasks
-      gibson_tasks = task_status name: "Gibson Assembly", group: io_hash[:group]
-      if gibson_tasks[:fragments][:need_to_build].length > 0
-
-        need_to_make_fragment_ids = gibson_tasks[:fragments][:need_to_build].uniq
-        new_fragment_construction_ids = []
-
-        need_to_make_fragment_ids.each do |id|
-          fragment = find(:sample, id: id)[0]
-          tp = TaskPrototype.where("name = 'Fragment Construction'")[0]
-          task = find(:task, name: "#{fragment.name}")[0]
-          if task
-            if task.status == "done"
-              set_task_status(task, "waiting")
-              task.notify "Automatically changed status to waiting to make more fragments", job_id: jid
-            end
-          else
-            t = Task.new(name: "#{fragment.name}", specification: { "fragments Fragment" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: fragment.user.id)
-            t.save
-            t.notify "Automatically created from Gibson Assembly.", job_id: jid
-            new_fragment_construction_ids.push t.id
-          end
-        end
-
-        new_fragment_construction_ids.compact!
-
-        if new_fragment_construction_ids.length > 0
-          new_fragment_construction_tasks_tab = task_info_table(new_fragment_construction_ids)
-          show {
-            title "New fragment Construction tasks"
-            note "The following fragment Construction tasks are automatically generated for fragments that need to be built in Gibson Assemblies."
-            table new_fragment_construction_tasks_tab
-          }
-        end
-
-      end
-
-      fs = task_status name: "Fragment Construction", group: io_hash[:group], notification: "on"
-      # if fs[:fragments] && fs[:fragments][:not_ready_to_build].length > 0
-      #   waiting_ids = fs[:waiting_ids]
-      #   users = waiting_ids.collect { |tid| find(:task, id: tid)[0].user.name }
-      #   fragment_ids = waiting_ids.collect { |tid| find(:task, id: tid)[0].simple_spec[:fragments] }
-      #   ready_to_build_fragment_ids = fs[:fragments][:ready_to_build].uniq
-      #   not_ready_to_build_fragment_ids = fs[:fragments][:not_ready_to_build].uniq
-      #   fs_tab = [[ "Not ready tasks", "Tasks owner", "Fragments", "Ready to build", "Not ready to build" ]]
-      #   waiting_ids.each_with_index do |tid,idx|
-      #     fs_tab.push [ tid, users[idx], fragment_ids[idx].to_s, (fragment_ids[idx]&ready_to_build_fragment_ids).to_s, (fragment_ids[idx]&not_ready_to_build_fragment_ids).to_s ]
-      #   end
-      #   show {
-      #     title "Fragment Construction Status"
-      #     note "Ready to build means recipes and ingredients for building this fragments are complete. Not ready to build means some information or stocks are missing."
-      #     table fs_tab
-      #   }
-      # end
-
-      # automatically submit primer order tasks if both primer stock and primer aliquot are missing for not_ready_to_build fragments.
-      need_to_order_primer_ids = missing_primer(fs[:fragments][:not_ready_to_build].uniq)
-      new_primer_order_ids = []
-
-      need_to_order_primer_ids.each do |id|
-        primer = find(:sample, id: id)[0]
-        tp = TaskPrototype.where("name = 'Primer Order'")[0]
-        t = Task.new(name: "#{primer.name}", specification: { "primer_ids Primer" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: primer.user.id)
-        t.save
-        t.notify "Automatically created from Fragment Construction.", job_id: jid
-        new_primer_order_ids.push t.id
-      end
-
-      new_primer_order_ids.compact!
-
-      if new_primer_order_ids.length > 0
-        new_primer_order_tab = task_info_table(new_primer_order_ids)
-        show {
-          title "New Primer Order tasks"
-          note "The following Primer Order tasks are automatically generated for primers that need to be ordered from Fragment Constructions."
-          table new_primer_order_tab
-        }
-      end
-
-      # pull out fragments from Fragment Construction tasks and cut off based on limits for non tech groups
-      io_hash[:task_ids] = fs[:ready_ids]
-      sizes, fragment_ids = [], []
-      io_hash[:task_ids].each do |tid|
-        task = find(:task, id: tid)[0]
-        fragment_ids.concat task.simple_spec[:fragments]
-        fragment_ids.uniq!
-        sizes.push fragment_ids.length
-      end
-
-      tetra_all_tab = [[ "size", "PCR","run_gel","cut_gel","purify_gel" ]]
-      sizes.each do |size|
-        job_times = []
-        ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
-          job_times.push time_prediction(size, protocol_name)
-        end
-        tetra_all_tab.push([size].concat job_times)
-      end
-      size_limit = task_size_select(io_hash[:task_name], sizes, tetra_all_tab)
-
-      limit_idx = 0
-      io_hash[:task_ids].each_with_index do |tid,idx|
-        task = find(:task, id: tid)[0]
-        io_hash[:fragment_ids].concat task.simple_spec[:fragments]
-        io_hash[:fragment_ids].uniq!
-        if io_hash[:fragment_ids].length >= size_limit
-          limit_idx = idx + 1
-          break
-        end
-      end
-      io_hash[:task_ids] = io_hash[:task_ids].take(limit_idx)
-      io_hash[:size] = io_hash[:fragment_ids].length
-
-      # adding Tetra (time estimation tool for Aquarium) display
-      tetra_tab = [[ "Protocol Name", "Esitmated Time (min)"]]
-
-      ["PCR","run_gel","cut_gel","purify_gel"].each do |protocol_name|
-        tetra_tab.push [protocol_name, time_prediction(io_hash[:size], protocol_name)]
-      end
-
-      show {
-        title "Tetra time predictions"
-        note "There is #{io_hash[:size]} #{io_hash[:task_name]} to do. Tetra prediction for
-        each job duration in minutes is following."
-        table tetra_tab
-      }
 
     when "Plasmid Verification"
       io_hash = { num_colonies: [], primer_ids: [], initials: [], glycerol_stock_ids: [], size: 0 }.merge io_hash
@@ -535,6 +445,63 @@ class Protocol
 
       io_hash[:task_ids] = io_hash[:task_ids].take(limit_idx)
       io_hash[:size] = io_hash[:num_colonies].inject { |sum, n| sum + n } || 0 + io_hash[:glycerol_stock_ids].length
+
+    when "Streak Plate"
+        yeast_competent_cells = task_status name: "Yeast Competent Cell", group: io_hash[:group]
+        need_to_streak_glycerol_stocks = []
+        if yeast_competent_cells[:yeast_strains][:ready_to_streak].length > 0
+          yeast_competent_cells[:yeast_strains][:ready_to_streak].each do |yid|
+            y = find(:sample, id: yid)[0]
+            y_stocks = y.in("Yeast Glycerol Stock")
+            need_to_streak_glycerol_stocks.push y_stocks[0].id
+          end
+
+          new_streak_plate_task_ids = []
+          need_to_streak_glycerol_stocks.each do |id|
+            y = find(:item, id: id)[0]
+            tp = TaskPrototype.where("name = 'Streak Plate'")[0]
+            task = find(:task, name: "#{y.sample.name}_streak_plate")[0]
+            # check if task already exists, if so, reset its status to waiting, if not, create new tasks.
+            if task
+              if task.status == "imaged and stored in fridge"
+                set_task_status(task,"waiting")
+                task.notify "Automatically changed status to waiting to make more competent cells as needed from Yeast Transformation.", job_id: jid
+                task.save
+              end
+            else
+              t = Task.new(name: "#{y.sample.name}_streak_plate", specification: { "item_ids Yeast Glycerol Stock" => [ id ]}.to_json, task_prototype_id: tp.id, status: "waiting", user_id: y.sample.user.id)
+              t.save
+              t.notify "Automatically created from Yeast Competent Cell.", job_id: jid
+              new_streak_plate_task_ids.push t.id
+            end
+          end
+
+          if new_streak_plate_task_ids.length > 0
+            new_streak_plate_tab = task_info_table(new_streak_plate_task_ids)
+            show {
+              title "New Streak Plate tasks"
+              note "The following Streak Plate tasks are automatically generated for yeast strains that need to streak plate in Yeast Competent Cell tasks."
+              table new_streak_plate_tab
+            }
+          end
+        end
+
+        streak_plate_tasks = task_status name: "Streak Plate", group: io_hash[:group]
+        io_hash[:task_ids] = streak_plate_tasks[:ready_ids]
+        io_hash[:yeast_glycerol_stock_ids] = []
+        io_hash[:task_ids].each do |tid|
+          task = find(:task, id: tid)[0]
+          task.simple_spec[:item_ids].each do |id|
+            if find(:item, id: id)[0].object_type.name == "Yeast Glycerol Stock"
+              io_hash[:yeast_glycerol_stock_ids].push id
+            elsif ["Yeast Plate", "Plate"].include? find(:item, id: id)[0].object_type.name
+              io_hash[:plate_ids].concat task.simple_spec[:item_ids]
+            else
+              io_hash[:item_ids].concat task.simple_spec[:item_ids]
+            end
+          end
+        end
+        io_hash[:size] = io_hash[:yeast_glycerol_stock_ids].length + io_hash[:plate_ids].length
 
     when "Yeast Transformation"
       io_hash = { yeast_transformed_strain_ids: [], plasmid_stock_ids: [], yeast_parent_strain_ids: [] }.merge io_hash
