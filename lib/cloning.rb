@@ -538,7 +538,7 @@ module Cloning
         output_plasmid = find(:sample, id: t.simple_spec[:DEST_result])[0]
         marker = output_plasmid.properties["Bacterial Marker"] || ""
         if marker.empty?
-          t[:plasmids][:not_ready].push id
+          t[:plasmids][:not_ready].push t.simple_spec[:DEST_result]
           t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
         end
 
