@@ -325,7 +325,8 @@ module Cloning
     }
   end ### yeast_transformation_status
 
-  def load_samples_variable_vol headings, ingredients, collections # ingredients must be a string or number
+  def load_samples_variable_vol headings, ingredients, collections, options = {} # ingredients must be a string or number
+    opts = { title_prefix: "Load" }.merge options
 
     if block_given?
       user_shows = ShowBlock.new.run(&Proc.new)
@@ -358,7 +359,7 @@ module Cloning
       end
 
       show {
-          title "Load #{col.object_type.name} #{col.id}"
+          title "#{title_prefix} #{col.object_type.name} #{col.id}"
           table heading + tab
           raw user_shows
         }
