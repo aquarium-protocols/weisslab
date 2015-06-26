@@ -97,7 +97,7 @@ class Protocol
       title "Incubate and shake at 37 C"
       note "Place the followng tube in a shaker incubator at 37 C and 280 rpm"
       note transformed_aliquot_ids.join(", ")
-      note "Retrive all the tubes after 60 min by starting the plate_gateway_transformation protocol in the workflow."
+      note "Retrive all the tubes after 60 min by starting the plate_ecoli_transformation protocol in the workflow."
     }
 
     move transformed_aliquots, "37 C shaker incubator"

@@ -446,6 +446,15 @@ class Protocol
       io_hash[:task_ids] = io_hash[:task_ids].take(limit_idx)
       io_hash[:size] = io_hash[:num_colonies].inject { |sum, n| sum + n } || 0 + io_hash[:glycerol_stock_ids].length
 
+    when "Plasmid Extraction"
+      io_hash = { plate_ids: [], num_colonies: [] }.merge io_hash
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        io_hash[:plate_ids].concat task.simple_spec[:plate_ids]
+        io_hash[:num_colonies].concat task.simple_spec[:num_colonies]
+      end
+      io_hash[:size] = io_hash[:num_colonies].inject { |sum, n| sum + n }
+
     when "Streak Plate"
         yeast_competent_cells = task_status name: "Yeast Competent Cell", group: io_hash[:group]
         need_to_streak_glycerol_stocks = []

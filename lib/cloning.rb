@@ -151,180 +151,6 @@ module Cloning
 
   end # # # # # # #
 
-  def gibson_assembly_status p={}
-
-    # find all un done gibson assembly tasks and arrange them into lists by status
-    params = ({ group: false }).merge p
-    tasks_all = find(:task,{task_prototype: { name: "Gibson Assembly" }})
-    tasks = []
-    # filter out tasks based on group input
-    if params[:group]
-      user_group = params[:group] == "technicians"? "cloning": params[:group]
-      group_info = Group.find_by_name(user_group)
-      tasks_all.each do |t|
-        tasks.push t if t.user.member? group_info.id
-      end
-    else
-      tasks = tasks_all
-    end
-    waiting = tasks.select { |t| t.status == "waiting for fragments" }
-    ready = tasks.select { |t| t.status == "ready" }
-
-    # look up all fragments needed to assemble, and sort them by whether they are ready to build, etc.
-    (waiting + ready).each do |t|
-      # show {
-      #     note "#{t.simple_spec}"
-      # }
-      t[:fragments] = { ready_to_use: [], not_ready_to_use: [], ready_to_build: [], not_ready_to_build: [] }
-
-      t.simple_spec[:fragments].each do |fid|
-
-        info = fragment_info fid, task_id: t.id
-
-        # First check if there already exists fragment stock and if its length info is entered, it's ready to build.
-        if find(:sample, id: fid)[0].in("Fragment Stock").length > 0 && find(:sample, id: fid)[0].properties["Length"] > 0
-          t[:fragments][:ready_to_use].push fid
-        elsif find(:sample, id: fid)[0].in("Fragment Stock").length > 0 && find(:sample, id: fid)[0].properties["Length"] == 0
-          t[:fragments][:not_ready_to_use].push fid
-        elsif !info
-          t[:fragments][:not_ready_to_build].push fid
-        # elsif info[:stocks].length > 0
-        #   t[:fragments][:ready_to_use].push fid
-        else
-          t[:fragments][:ready_to_build].push fid
-        end
-
-      end
-
-    # change tasks status based on whether the fragments are ready and the plasmid info entered is correct.
-      if t[:fragments][:ready_to_use].length == t.simple_spec[:fragments].length && find(:sample, id:t.simple_spec[:plasmid])[0]
-        t.status = "ready"
-        t.save
-        # show {
-        #   note "status changed to ready"
-        #   note "#{t.id}"
-        # }
-      else
-        t.status = "waiting for fragments"
-        t.save
-        # show {
-        #   note "status changed to waiting"
-        #   note "#{t.id}"
-        # }
-      end
-
-      # show {
-      #   note "After processing"
-      #   note "#{t[:fragments]}"
-      # }
-    end
-
-    # # # look up all the plasmids that are ready to build and return fragment array.
-    # ready.each do |r|
-
-    #   r[:fragments]
-
-    # return a big hash describing the status of all un-done assemblies
-    return {
-      fragments: ((waiting + ready).collect { |t| t[:fragments] }).inject { |all,part| all.each { |k,v| all[k].concat part[k] } },
-      waiting_ids: (tasks.select { |t| t.status == "waiting for fragments" }).collect { |t| t.id },
-      ready_ids: (tasks.select { |t| t.status == "ready" }).collect { |t| t.id },
-      running_ids: (tasks.select { |t| t.status == "running" }).collect { |t| t.id },
-      plated_ids: (tasks.select { |t| t.status == "plated" }).collect { |t| t.id },
-      done_ids: (tasks.select { |t| t.status == "imaged and stored in fridge" }).collect { |t| t.id }
-    }
-
-  end # # # # # # #
-
-  def fragment_construction_status
-    # find all fragment construction tasks and arrange them into lists by status
-    tasks = find(:task,{task_prototype: { name: "Fragment Construction" }})
-    waiting = tasks.select { |t| t.status == "waiting for ingredients" }
-    ready = tasks.select { |t| t.status == "ready" }
-    running = tasks.select { |t| t.status == "running" }
-    done = tasks.select { |t| t.status == "done" }
-
-    (waiting + ready).each do |t|
-      t[:fragments] = { ready_to_build: [], not_ready_to_build: [] }
-
-      t.simple_spec[:fragments].each do |fid|
-
-        info = fragment_info fid, task_id: t.id
-        if !info
-          t[:fragments][:not_ready_to_build].push fid
-        else
-          t[:fragments][:ready_to_build].push fid
-        end
-
-      end
-
-      if t[:fragments][:ready_to_build].length == t.simple_spec[:fragments].length
-        t.status = "ready"
-        t.save
-        # show {
-        #   note "fragment construction status set to ready"
-        #   note "#{t.id}"
-        # }
-      elsif t[:fragments][:ready_to_build].length < t.simple_spec[:fragments].length
-        t.status = "waiting for ingredients"
-        t.save
-        # show {
-        #   note "fragment construction status set to waiting"
-        #   note "#{t.id}"
-        # }
-      end
-    end
-
-    return {
-      fragments: ((waiting + ready).collect { |t| t[:fragments] }).inject { |all,part| all.each { |k,v| all[k].concat part[k] } },
-      waiting_ids: (tasks.select { |t| t.status == "waiting for ingredients" }).collect {|t| t.id},
-      ready_ids: (tasks.select { |t| t.status == "ready" }).collect {|t| t.id},
-      running_ids: running.collect {|t| t.id}
-    }
-  end ### fragment_construction_status
-
-  def yeast_transformation_status p={}
-    # find all yeast transformation tasks and arrange them into lists by status
-    params = ({ group: false }).merge p
-    tasks_all = find(:task,{task_prototype: { name: "Yeast Transformation" }})
-    tasks = []
-    # filter out tasks based on group input
-    if params[:group]
-      user_group = params[:group] == "technicians"? "cloning": params[:group]
-      group_info = Group.find_by_name(user_group)
-      tasks_all.each do |t|
-        tasks.push t if t.user.member? group_info.id
-      end
-    else
-      tasks = tasks_all
-    end
-    waiting = tasks.select { |t| t.status == "waiting for ingredients" }
-    ready = tasks.select { |t| t.status == "ready" }
-    (waiting + ready).each do |task|
-      ready_yeast_strains = []
-      task.simple_spec[:yeast_transformed_strain_ids].each do |yid|
-        y = find(:sample, id: yid)[0]
-        # check if glycerol stock and plasmid stock are ready
-        parent_ready = y.properties["Parent"].in("Yeast Glycerol Stock").length > 0 || y.properties["Parent"].in("Yeast Plate").length > 0 || y.properties["Parent"].in("Yeast Competent Aliquot").length > 0 || y.properties["Parent"].in("Yeast Overnight Suspension").length > 0 || y.properties["Parent"].in("Yeast Competent Cell").length > 0
-        plasmid_ready = y.properties["Integrant"].in("Plasmid Stock").length > 0 if y.properties["Integrant"]
-        ready_yeast_strains.push y if parent_ready && plasmid_ready
-      end
-      if ready_yeast_strains.length == task.simple_spec[:yeast_transformed_strain_ids].length
-        task.status = "ready"
-        task.save
-      else
-        task.status = "waiting for ingredients"
-        task.save
-      end
-    end # task_ids
-    return {
-      waiting_ids: (tasks.select { |t| t.status == "waiting for ingredients" }).collect { |t| t.id },
-      ready_ids: (tasks.select { |t| t.status == "ready" }).collect { |t| t.id },
-      plated_ids: (tasks.select { |t| t.status == "plated" }).collect { |t| t.id },
-      done_ids: (tasks.select { |t| t.status == "imaged and stored in fridge" }).collect { |t| t.id }
-    }
-  end ### yeast_transformation_status
-
   def load_samples_variable_vol headings, ingredients, collections, options = {} # ingredients must be a string or number
     opts = { title_prefix: "Load" }.merge options
 
@@ -366,56 +192,6 @@ module Cloning
     end
 
   end ### yeast_transformation_status
-
-  def sequencing_status p={}
-    params = ({ group: false }).merge p
-    tasks_all = find(:task,{task_prototype: { name: "Sequencing" }})
-    tasks = []
-    # filter out tasks based on group input
-    if params[:group]
-      user_group = params[:group] == "technicians"? "cloning": params[:group]
-      group_info = Group.find_by_name(user_group)
-      tasks_all.each do |t|
-        tasks.push t if t.user.member? group_info.id
-      end
-    else
-      tasks = tasks_all
-    end
-    waiting = tasks.select { |t| t.status == "waiting for ingredients" }
-    ready = tasks.select { |t| t.status == "ready" }
-    running = tasks.select { |t| t.status == "send to sequencing" }
-    done = tasks.select { |t| t.status == "results back" }
-
-    # cycling through waiting and ready to make sure primer aliquots are in place
-
-    (waiting + ready).each do |t|
-
-      t[:primers] = { ready: [], no_aliquot: [] }
-
-      t.simple_spec[:primer_ids].each do |prid|
-        if find(:sample, id: prid)[0].in("Primer Aliquot").length > 0
-          t[:primers][:ready].push prid
-        else
-          t[:primers][:no_aliquot].push prid
-        end
-      end
-
-      if t[:primers][:ready].length == t.simple_spec[:primer_ids].length && find(:item, id: t.simple_spec[:plasmid_stock_id])
-        t.status = "ready"
-        t.save
-      else
-        t.status = "waiting for ingredients"
-        t.save
-      end
-    end
-
-    return {
-      waiting_ids: (tasks.select { |t| t.status == "waiting for fragments" }).collect {|t| t.id},
-      ready_ids: (tasks.select { |t| t.status == "ready" }).collect {|t| t.id},
-      running_ids: running.collect { |t| t.id },
-      done_ids: done.collect { |t| t.id }
-    }
-  end ### sequencing_status
 
   def task_status p={}
 
@@ -529,7 +305,7 @@ module Cloning
           plasmid = find(:sample, id: id)[0]
           if plasmid == nil
             t[:plasmids][:not_ready].push id
-            t.notify "Sample #{id} is not a valid.", job_id: jid
+            t.notify "Sample #{id} is not a valid sample.", job_id: jid
           elsif plasmid.in("Plasmid Stock").length == 0
             t[:plasmids][:not_ready].push id
             t.notify "Plasmid stock required for sample #{id}", job_id: jid
@@ -587,6 +363,29 @@ module Cloning
         end
 
         ready_conditions = length_check && t[:plate_ids][:ready].length == t.simple_spec[:plate_ids].length && t[:primers][:ready].length == primer_ids.length
+
+      when "Plasmid Extraction"
+        t[:plates] = { not_ready: [] }
+        if t.simple_spec[:plate_ids].length != t.simple_spec[:num_colonies].length
+          t[:plates][:not_ready].concat t.simple_spec[:plate_ids]
+          t.notify "plate_ids and num_colonies needs to have the same length", job_id: jid
+        end
+        t.simple_spec[:plate_ids].each_with_index do |id, idx|
+          plate = find(:item, id: id)[0]
+          if plate == nil
+            t[:plates][:not_ready].push id
+            t.notify "Plate #{id} is not an valid item.", job_id: jid
+          else
+            marker = plate.sample.properties["Bacterial Marker"] || ""
+            if marker.empty?
+              t[:plates][:not_ready].push id
+              t.notify "Bacterial Marker info required for sample of Plate #{id}", job_id: jid
+            elsif !(t.simple_spec[:num_colonies][idx] || 0).between?(1, 10)
+              t[:plates][:not_ready].push id
+            end
+          end
+        end
+        ready_conditions = t[:plates][:not_ready].length == 0
 
       when "Sequencing"
         t[:primers] = { ready: [], no_aliquot: [] }

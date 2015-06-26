@@ -6,8 +6,6 @@ class Protocol
   include Standard
   include Cloning
 
-
-
   def arguments
     {
       io_hash: {},
