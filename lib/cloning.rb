@@ -359,7 +359,7 @@ module Cloning
       end
 
       show {
-          title "#{title_prefix} #{col.object_type.name} #{col.id}"
+          title "#{opts[:title_prefix]} #{col.object_type.name} #{col.id}"
           table heading + tab
           raw user_shows
         }
