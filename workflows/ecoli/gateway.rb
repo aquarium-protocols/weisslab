@@ -103,7 +103,14 @@ class Protocol
       end
     end
 
-    # Dilute stocks
+    entr1_ids = entr_stocks.collect { |stocks|
+      "#{stocks[0]}"
+    }
+    entr2_ids = entr_stocks.collect { |stocks|
+      "#{stocks[1]}"
+    }
+    dest_ids = dest_stocks.collect { |s| "#{s}" }
+
 
     # Setup gateway reactions
     dest_results = io_hash[:dest_result_ids].collect { |id| find(:sample,{ id: id })[0] }
@@ -119,6 +126,24 @@ class Protocol
           check "Grab a new stripwell with 12 wells and label with the id #{sw}."
         end
       end
+    }
+
+    load_samples_variable_vol( [ "pENTR1, 1 µL", "pENTR2, 1 µL", "pDEST, 1 µL" ], [
+        entr1_ids,
+        entr2_ids,
+        dest_ids,
+      ], stripwells ) {
+        warning "Use a fresh pipette tip for each transfer.".upcase
+      }
+
+    show {
+      title "Add LR Clonase Enzyme"
+      warning "USE A NEW PIPETTE TIP FOR EACH WELL."
+      stripwells.each do |sw|
+        check "Pipette 0.5 µL of LR Clonase Enzyme into each of wells " + sw.non_empty_string + " of stripwell #{sw}."
+      end
+      check "Mixing the reaction by using a 10 µL pipette set to 3 uL, pipette up and down gently."
+      check "Put the cap on each stripwell. Press each one very hard to make sure it is sealed."
     }
 
     stripwells.each do |sw|
