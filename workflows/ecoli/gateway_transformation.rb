@@ -52,7 +52,7 @@ class Protocol
     # load competent cell aliquot from stripwell
     load_samples_variable_vol(["Competent Cell Aliquot"],[transformed_aliquot_ids], stripwells, title_prefix: "Unload") {
       note "Pieptte 1 µL from each well into labeled competent cell aliquot."
-      note "Discard the stripwell into waste bin after loading."
+      note "Discard the stripwell into waste bin after unloading."
     }
 
     # delete stripwells
@@ -90,7 +90,7 @@ class Protocol
       timer initial: { hours: 0, minutes: 2, seconds: 0}
       note "Add 0.9 mL of room temperature S.O.C medium into each tube after incubation."
       note transformed_aliquot_ids.join(", ")
-      warning "S.O.C is made by dissolving 0.5 mL of 20% glucose in 25 ml of SOB. Make sure that the SOC is clear and not cloudy(contaminated)."
+      warning "S.O.C is made by dissolving 0.5 mL of 20% glucose in 25 ml of SOB. Make sure that the SOC is clear and not cloudy (contaminated)."
     }
 
     show {
