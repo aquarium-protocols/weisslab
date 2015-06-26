@@ -539,7 +539,7 @@ module Cloning
         marker = output_plasmid.properties["Bacterial Marker"] || ""
         if marker.empty?
           t[:plasmids][:not_ready].push t.simple_spec[:DEST_result]
-          t.notify "Bacterial Marker info required for sample #{id}", job_id: jid
+          t.notify "Bacterial Marker info required for sample #{t.simple_spec[:DEST_result]}", job_id: jid
         end
 
         ready_conditions = t[:plasmids][:not_ready].length == 0
