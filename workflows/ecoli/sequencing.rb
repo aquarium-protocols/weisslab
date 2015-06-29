@@ -11,8 +11,8 @@ class Protocol
       io_hash: {},
       plasmid_stock_ids: [15417,15418],
       primer_ids: [[2575,2054],[2054]],
-      debug_mode: "Yes",
-      group: "yang"
+      debug_mode: "No",
+      group: "technicians"
     }
   end
 
@@ -26,7 +26,7 @@ class Protocol
         true
       end
     end
-    batch_initials = "MP"
+    batch_initials = "WL"
 
     # turn input plasmid_stock_ids and primer_ids into two corresponding arrays
     plasmid_stock_ids = []
@@ -45,25 +45,6 @@ class Protocol
       end
     end
 
-    sequencing_info = task_status name: "Sequencing", group: io_hash[:group]
-    io_hash[:sequencing_task_ids] = sequencing_info[:ready_ids]
-    io_hash[:task_ids].concat io_hash[:sequencing_task_ids]
-    io_hash[:sequencing_task_ids].each do |tid|
-      ready_task = find(:task, id: tid)[0]
-      ready_task.simple_spec[:primer_ids].each_with_index do |pids,idx|
-        stock = find(:item, id: ready_task.simple_spec[:plasmid_stock_id][idx])[0]
-        if stock.datum[:concentration] &&  stock.datum[:concentration]!= 0 && ["Plasmid", "Fragment"].include?(stock.sample.sample_type.name)
-          primer_ids.concat pids
-          (1..pids.length).each do
-            plasmid_stock_ids.push ready_task.simple_spec[:plasmid_stock_id][idx]
-          end
-        end
-      end
-      # show {
-      #   note "#{ready_task.spec}"
-      # }
-      io_hash[:task_ids].push tid
-    end
     if plasmid_stock_ids.length == 0
       show {
         title "No sequencing needs to run."
@@ -90,7 +71,7 @@ class Protocol
     num = primer_ids.length
     genewiz = show {
       title "Create a Genewiz order"
-      check "Go the Genewiz website, log in with lab account (Username: mnparks@uw.edu, password is the lab general password)."
+      check "Go to the Genewiz website, log in with lab account (Username: mnparks@uw.edu, password is the lab general password)."
       check "Click Create Sequencing Order, choose Same Day, Online Form, Pre-Mixed, #{num} samples, then Create New Form"
       check "Enter DNA Name and My Primer Name according to the following table, choose DNA Type to be Plasmid"
       table sequencing_tab

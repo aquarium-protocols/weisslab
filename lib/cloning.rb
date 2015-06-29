@@ -390,9 +390,7 @@ module Cloning
       when "Sequencing"
         t[:primers] = { ready: [], no_aliquot: [] }
 
-        primer_ids = t.simple_spec[:primer_ids].flatten.uniq
-
-        primer_ids.each do |prid|
+        t.simple_spec[:primer_ids].flatten.uniq.each do |prid|
           if find(:sample, id: prid)[0].in("Primer Aliquot").length > 0
             t[:primers][:ready].push prid
           else
@@ -401,7 +399,20 @@ module Cloning
           end
         end
 
-        ready_conditions = t[:primers][:ready].length == primer_ids.length && find(:item, id: t.simple_spec[:plasmid_stock_id])
+        t[:stocks] = { not_ready: [] }
+
+        t.simple_spec[:plasmid_stock_id].each do |id|
+          stock = find(:item, id: id)[0]
+          if stock == nil
+            t[:stocks][:not_ready].push id
+            t.notify "Stock #{id} is not an valid item.", job_id: jid
+          elsif !(["Plasmid", "Fragment"].include? stock.sample.sample_type.name)
+            t[:stocks][:not_ready].push id
+            t.notify "Stock #{id} need to be an item of Plasmid or Fragment.", job_id: jid
+          end
+        end
+
+        ready_conditions = t[:primers][:ready].length == primer_ids.length && t[:stocks][:not_ready].length == 0
 
       when "Streak Plate"
         t[:item_ids] = { ready: [], not_ready: [] }
