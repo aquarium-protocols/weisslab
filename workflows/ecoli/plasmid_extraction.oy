@@ -17,7 +17,7 @@ place tasks_inputs
 end
 
 place overnight
-  protocol: "aqualib:workflows/ecoli/start_overnight_plate.rb"
+  protocol: "aqualib:workflows/ecoli/start_overnight.rb"
   group: group
   argument
     debug_mode: debug_mode
