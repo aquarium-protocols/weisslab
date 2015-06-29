@@ -391,7 +391,7 @@ module Cloning
         t[:primers] = { not_ready: [] }
 
         t.simple_spec[:primer_ids].flatten.uniq.each do |id|
-          primer = find(:sample, id: id)
+          primer = find(:sample, id: id)[0]
           if primer == nil
             t[:primers][:not_ready].push id
             t.notify "Primer #{id} is not valid", job_id: jid
