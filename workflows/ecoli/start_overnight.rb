@@ -39,13 +39,13 @@ class Protocol
     # produce colony_plates which duplicate num_colonies for each plate and turn into array
 
     plates.each_with_index do |p,idx|
-      new_overnights = (1..num_colonies[idx]).collect { |n| produce new_sample p.sample.name, of: "Plasmid", as: "TB Overnight of Plasmid" }
+      new_overnights = (1..io_hash[:num_colonies][idx]).collect { |n| produce new_sample p.sample.name, of: "Plasmid", as: "TB Overnight of Plasmid" }
       new_overnights.each do |x|
         x.datum = { from: p.id }
         x.save
       end
       overnights.concat new_overnights
-      colony_plates.concat((1..num_colonies[idx]).collect { |n| p })
+      colony_plates.concat((1..io_hash[:num_colonies][idx]).collect { |n| p })
     end
 
     overnight_marker_hash = Hash.new {|h,k| h[k] = [] }
@@ -87,7 +87,6 @@ class Protocol
     end
 
     # Return all io_hash related info
-    io_hash[:num_colonies] = num_colonies
     io_hash[:overnight_ids] = overnights.collect { |o| o.id }
     return { io_hash: io_hash }
 
