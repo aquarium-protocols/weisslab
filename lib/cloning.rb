@@ -388,13 +388,15 @@ module Cloning
         ready_conditions = t[:plates][:not_ready].length == 0
 
       when "Sequencing"
-        t[:primers] = { ready: [], no_aliquot: [] }
+        t[:primers] = { not_ready: [] }
 
-        t.simple_spec[:primer_ids].flatten.uniq.each do |prid|
-          if find(:sample, id: prid)[0].in("Primer Aliquot").length > 0
-            t[:primers][:ready].push prid
-          else
-            t[:primers][:no_aliquot].push prid
+        t.simple_spec[:primer_ids].flatten.uniq.each do |id|
+          primer = find(:sample, id: id)
+          if primer == nil
+            t[:primers][:not_ready].push id
+            t.notify "Primer #{id} is not valid", job_id: jid
+          elsif primer.in("Primer Aliquot").length == 0
+            t[:primers][:not_ready].push id
             t.notify "Primer #{prid} has no primer aliquot.", job_id: jid
           end
         end
@@ -412,7 +414,7 @@ module Cloning
           end
         end
 
-        ready_conditions = t[:primers][:ready].length == primer_ids.length && t[:stocks][:not_ready].length == 0
+        ready_conditions = t[:primers][:not_ready].length == 0 && t[:stocks][:not_ready].length == 0
 
       when "Streak Plate"
         t[:item_ids] = { ready: [], not_ready: [] }
