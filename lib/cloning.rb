@@ -414,7 +414,7 @@ module Cloning
             t.notify "Primer #{id} is not valid", job_id: jid
           elsif primer.in("Primer Aliquot").length == 0
             t[:primers][:not_ready].push id
-            t.notify "Primer #{prid} has no primer aliquot.", job_id: jid
+            t.notify "Primer #{id} has no primer aliquot.", job_id: jid
           end
         end
 
