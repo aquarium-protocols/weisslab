@@ -516,8 +516,15 @@ class Protocol
       io_hash = { plasmid_stock_ids: [], primer_ids: [] }.merge io_hash
       io_hash[:task_ids].each do |tid|
         task = find(:task, id: tid)[0]
-        io_hash[:plasmid_stock_ids].concat task.simple_spec[:plasmid_stock_id]
+        io_hash[:plasmid_stock_ids].concat task.simple_spec[:plasmid_stock_ids]
         io_hash[:primer_ids].concat task.simple_spec[:primer_ids]
+      end
+
+    when "Restriction Digest"
+      io_hash = { plasmid_stock_ids: [] }.merge io_hash
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        io_hash[:plasmid_stock_ids].concat task.simple_spec[:plasmid_stock_ids]
       end
 
     when "Yeast Transformation"

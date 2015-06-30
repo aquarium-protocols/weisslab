@@ -387,6 +387,23 @@ module Cloning
         end
         ready_conditions = t[:plates][:not_ready].length == 0
 
+      when "Restriction Digest"
+        t[:stocks] = { not_ready: [] }
+        t.simple_spec[:plasmid_stock_ids].each do |id|
+          stock = find(:item, id: id)[0]
+          if stock == nil
+            t[:stocks][:not_ready].push id
+            t.notify "Stock #{id} is not an valid item.", job_id: jid
+          elsif !(["Plasmid", "Fragment"].include? stock.sample.sample_type.name)
+            t[:stocks][:not_ready].push id
+            t.notify "Stock #{id} need to be an item of Plasmid or Fragment.", job_id: jid
+          elsif (stock.sample.properties["Restriction Enzymes"] || "").length == 0
+            t[:stocks][:not_ready].push id
+            t.notify "Stock #{id}'s sample needs to have Restriction Enzymes entered.", job_id: jid
+          end
+        end
+        ready_conditions = t[:stocks][:not_ready].length == 0
+
       when "Sequencing"
         t[:primers] = { not_ready: [] }
 
@@ -403,7 +420,7 @@ module Cloning
 
         t[:stocks] = { not_ready: [] }
 
-        t.simple_spec[:plasmid_stock_id].each do |id|
+        t.simple_spec[:plasmid_stock_ids].each do |id|
           stock = find(:item, id: id)[0]
           if stock == nil
             t[:stocks][:not_ready].push id
