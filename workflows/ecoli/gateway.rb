@@ -19,6 +19,8 @@ class Protocol
     }
   end
 
+  # protocol for performing LR reaction in Gateway Cloning.
+
   def main
     io_hash = input[:io_hash]
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
