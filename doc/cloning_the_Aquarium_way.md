@@ -24,14 +24,7 @@ For each fragment, it finds the 1ng/µL plasmid stock of the fragment. If a 1ng/
 Enter the sample id of the fragment in the fragments argument, it can also be an array of sampld ids. For each submitted fragment, you need to enter **Length**, **Template**, **Forward Primer**, **Reverse Primer**, which can be edited in the fragment sample page by clicking Edit Fragment Information. The template can be a plasmid, fragment, yeast strain, or E coli strain. For plasmid, you need plasmid stock or 1ng/µL plasmid stock existed in the inventory.
 
 | Template   |      Inventory in container needed |
-|:----------:|:-------------:|
-| Plasmid  |  Plasmid stock or 1ng/µL Plasmid Stock  |
-| Fragment | Fragment Stock or 1ng/µL Fragment Stock |
-| Yeast Strain | Lysate or Yeast cDNA if no Lysate  |
-| E coli strain | E coli Lysate or Genome Prep if no E coli Lysate |
-
-| Template  |  Inventory in container needed  |
-|:----------:|:-------------:|
+|:---------- |:------------- |
 | Plasmid  |  Plasmid stock or 1ng/µL Plasmid Stock  |
 | Fragment | Fragment Stock or 1ng/µL Fragment Stock |
 | Yeast Strain | Lysate or Yeast cDNA if no Lysate  |
