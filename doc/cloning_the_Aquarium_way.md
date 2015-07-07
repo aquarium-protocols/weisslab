@@ -1,12 +1,24 @@
 Cloning the Aquarium way
 ===
 
+This documentation is used as a reference for using Aquarium to do cloning work via Tasks. A read through is recommended for new Aquarium users. In case you have any questions, contact this document author Yaoyu Yang by <yaoyu@uw.edu> or post notes in discussion board in Aquarium.
+
+Common Routines
+---
+Assume a task prototype has the name of Awesome Task (such as Gateway Cloning). To enter new tasks and track all existing tasks progress and information, go to Tasks > Awesome Tasks. You can click the button New Awesome Task to enter inputs for new tasks: you can enter anything that helps you recognize in the Name field, leave the Status as waiting by default, enter the rest of arguments referring to the input requirements of each specific task documentation in the following sections. If an argument input has "+", "-" buttons, it means the argument takes an array of inputs, if the input has two "+", "-" button, it means the argument takes an array of array inputs. You can also click the status bar such as waiting, ready, canceled, etc to track all your tasks. You can use search bar to filter out your tasks of interest by typing user name or tasks name. It starts with your user name as default.
+
+To actually carry out the Awesome Task for real in the wetlab, in most cases (except for Sequencing Verification) you need to schedule the metacol/protocols corresponding to this Awesome Task. Noting that it only needs to be started once to execute all the Awesome Tasks that are waiting or ready, so the best practice is to start this regularly every day at a determined time so users can enter their tasks before that time. To start the metacol/protocols, go to Protocols > Under Version Control, find the Github repo tree, click workflows/metacol, then click the file named awesome_task.oy, enter debug_mode as No, assign to a group that is going to experimentally perform all the protocols, normally choose technicians, then click Launch! All the protocols will then be subsequently scheduled and can be accessed from Protocols > Pending Jobs.
+
+For each new task entered, it will start as waiting by default. A protocol named tasks_inputs.rb, normally the first protocol in the metacol associated with this task, will process all the tasks in the waiting or ready status and change its status to ready if all the input requirements are fulfilled and change to waiting if not. All the tasks in the ready will be batched and being processed by subsequent protocols in the metacol to actually instruct technicians to perform guided steps in the lab to carry out actual experiments.
+
+If you don't want a task to be executed anymore, change its status to canceled. You are advised only to do this while your task is in waiting or ready and the metacol has not been started, if your task already been processed and progressed to other status, contact the Lab manager to discuss alternatives if you don't want a task to be executed anymore.
+
 Fragment Construction
 ---
 #### How it works?
-The Fragment Construction workflow takes fragment sample id as input and produces corresponding fragment stock as output. In detail, the workflow can be started by scheduling build_fragments metacol, it pools all the fragment sample ids submitted to the Fragment Construction task, build each fragment using the information entered into the sample field through the process of running PCR, pour_gel, run_gel, cut_gel and purify_gel protocols. 
+The Fragment Construction workflow takes fragment sample id as input and produces corresponding fragment stock as output. In detail, the workflow can be started by scheduling build_fragments metacol, it pools all the fragment sample ids submitted to the Fragment Construction task, build each fragment using the information entered into the sample field through the process of running PCR, pour_gel, run_gel, cut_gel and purify_gel protocols.
 
-On how the information is processed, for each fragment sample, it finds the 1ng/µL plasmid stock of the template defined in the sample field, if a 1ng/µL plasmid stock does not exist, it will try to dilute from the plasmid stock if there is any. It also finds the primer aliquot for the forward primer and reverse primer. It averages the T Anneal data in the forward and reverse primer field and uses the average as the desired annealing temperature for the PCR. The workflow first clusters all PCRs into 3 temperature groups, >= 70 C, 67 -70 C, < 67 C based on the desired annealing temperature. Then it finds the loweset annealing temperature in each group and uses that as the final annealing temperature. The workflow runs the PCR reactions for all fragments based on all above information and stocks it finds, then pours number of gels based on number of PCR reactions, runs the gel and then cut the gel based on the length info in the fragment field, finally purifies the gel and results in a fragment stock with concentration recorded in the datum field and placed in the M20 boxes. If a gel band does not match the length info, the corresponding gel lane will not be cut and no fragment stock will be produced for that fragment.
+On how the information is processed, for each fragment sample, it finds the 1ng/µL plasmid stock of the template defined in the sample field, if a 1ng/µL plasmid stock does not exist, it will try to dilute from the plasmid stock if there is any. It also finds the primer aliquot for the forward primer and reverse primer. It averages the T Anneal data in the forward and reverse primer field and uses the average as the desired annealing temperature for the PCR. The workflow first clusters all PCRs into 3 temperature groups, >= 70 C, 67 -70 C, < 67 C based on the desired annealing temperature. Then it finds the lowest annealing temperature in each group and uses that as the final annealing temperature. The workflow runs the PCR reactions for all fragments based on all above information and stocks it finds, then pours number of gels based on number of PCR reactions, runs the gel and then cut the gel based on the length info in the fragment field, finally purifies the gel and results in a fragment stock with concentration recorded in the datum field and placed in the M20 boxes. If a gel band does not match the length info, the corresponding gel lane will not be cut and no fragment stock will be produced for that fragment.
 
 The workflow manages the status of each task, the status could be "waiting", "ready", "pcr", "gel run", "gel cut", "done", "canceled" depending on how each task progresses. Initially, a task is labeled as "waiting" or "ready". When the build_fragment metacol started, it processes all tasks in "waiting" and "ready" stack, if all fragments in a task have all information and stocks ready, it will push the task to the "ready" stack and fires up all PCR reactions. If any fragment submitted into the task has missing information or stock, it will be labeled as "waiting".
 
@@ -30,6 +42,14 @@ You need to enter the **Bacterial Marker** info for the plasmid and **Length** i
 
 #### How to submit a task?
 To submit a Gibson assembly task, go to Tasks/Gibson Assembly, click New Gibson Assembly, enter Name as an identifier for you to recognize, could be any string that does not conflict with existing task names under Gibson Assembly task, leave the Status as "waiting" or change it to "ready" if you want, enter the plasmid id and fragment id by either directly enter the sample id or use the finder UI by clicking the button alongside the input box.
+
+Gateway Cloning
+---
+#### How it works?
+The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
+
+#### Input requirements
+You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker and Restriction Enzyme Info entered in the sample page.
 
 Plasmid Verification
 ---
@@ -77,7 +97,3 @@ For each yeast mating task, the yeast mating workflow takes two yeast strains as
 
 #### Input requirements
 For each task, you need to enter the sample id of the two yeast strains in the **yeast_mating_strain_ids** and you are allowed to only enter **two** yeast strain ids. You need to make sure each strain has at least one Yeast Glycerol Stock available. You also need to specify in the **yeast_selective_plate_type** which plate you intend to plate on, for example, it could be -TRP, -HIS or -URA, -LEU, etc. You can check your input by running aqualib/workflows/general/tasks_inputs.rb and enter Yeast Mating as the argument in task_name.
-
-
-
-
