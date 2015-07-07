@@ -31,9 +31,10 @@ Enter the sample id of the fragment in the fragments argument, it can also be an
 
 | Template  |  Inventory in container needed  |
 | :------------ |:---------------:|
-| col 3 is      | some wordy text |
-| col 2 is      | centered        |
-| zebra stripes | are neat        |
+| Plasmid  |  Plasmid stock or 1ng/µL Plasmid Stock  |
+| Fragment | Fragment Stock or 1ng/µL Fragment Stock |
+| Yeast Strain | Lysate or Yeast cDNA if no Lysate  |
+| E coli strain | E coli Lysate or Genome Prep if no E coli Lysate |
 
 Gibson Assembly
 ---
