@@ -30,7 +30,7 @@ Enter the sample id of the fragment in the fragments argument, it can also be an
 | E coli strain | E coli Lysate or Genome Prep if no E coli Lysate |
 
 | Template  |  Inventory in container needed  |
-| :------------ |:---------------:|
+|:----------:|:-------------:|
 | Plasmid  |  Plasmid stock or 1ng/µL Plasmid Stock  |
 | Fragment | Fragment Stock or 1ng/µL Fragment Stock |
 | Yeast Strain | Lysate or Yeast cDNA if no Lysate  |
