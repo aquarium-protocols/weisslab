@@ -70,11 +70,11 @@ Gateway Cloning
 The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
 
 #### Input requirements
-| Argument name   |      Id type required |  Data structure | Sample property |
-|:---------- |:------------- |:------------- |:------------- |
-| ENTRs  |  sample ids of Plasmid  | array (length of 2) | Not required |
-| DEST | sample id of Plasmid | single integer | Not required |
-| DEST_result | sample id of Plasmid | single integer | Bacterial Marker (e.g. Amp, Kan, etc) |
+| Argument name   |   Data type | Data structure | Inventory type | Sample property |
+|:---------- |:------------- |:------------- |:------------- |:------------- |
+| ENTRs  |  sample id |  array (length of 2) | Plasmid | Not required |
+| DEST | sample id  | integer | Plasmid | Not required |
+| DEST_result | sample id  | integer | Plasmid | Bacterial Marker (e.g. Amp, Kan, etc) |
 
 Plasmid Verification
 ---
@@ -90,10 +90,10 @@ Plasmid Extraction
 The plasmid extraction workflow takes an E coli Plate of Plasmid with id in plate_ids, picks a number of colonies based on input in num_colonies, starts overnights in corresponding selective media using  info defined in the Plasmid sample Bacterial Marker property, then performs miniprep to produce plasmid stocks.
 
 #### Input requirements
-| Argument name   |      Id type required |  Data structure | Sample property |
-|:---------- |:------------- |:------------- |:------------- |
-| plate_ids  |  item ids of E coli Plate of Plasmid  | array | Bacterial Marker (e.g. Amp, Kan, etc) |
-| num_colonies | integer ranging from 1 to 10 | array | N/A |
+| Argument name   |   Data type | Data structure | Inventory type | Sample property |
+|:---------- |:------------- |:------------- |:------------- |:------------- |
+| plate_ids  |  item ids  | array | E coli Plate of Plasmid | Bacterial Marker (e.g. Amp, Kan, etc) |
+| num_colonies | integer | array | N/A | N/A |
 
 Restriction Digest
 ---
