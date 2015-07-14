@@ -17,15 +17,15 @@ To define a new sample go to the inventory dropdown menu and select the desired 
 
 Creating new items of samples is relatively easy. For the most part items of samples will be created automatically through protocols, but there are times where an item may need to be entered outside of a protocol. To do this, go to the inventory page of the sample of which a new item is desired. Click on the desired container type and click the "New" button and Aquarium will create a new item with a unique item ID number.
 
-Creating New Sample Types
+#### Creating New Sample Types
 
-Creating New Container Types
+#### Creating New Container Types
 
-Deleting Items
+#### Deleting Items
 
-Deleting Samples
+#### Deleting Samples
 
-Common Routines
+Common Task Routines
 ---
 Assume a task prototype has the name of Awesome Task (such as Gateway Cloning). To enter new tasks and track all existing tasks progress and information, go to Tasks > Awesome Tasks. You can click the button New Awesome Task to enter inputs for new tasks: you can enter anything that helps you recognize in the Name field, leave the Status as waiting by default, enter the rest of inputs by either using the selection UI by clicking the button besides the input box or directly enter the inputs referring to the input requirements of each specific task documentation in the following sections. If an argument input has "+", "-" buttons, it means the argument takes an array of inputs, if the input has two "+", "-" button, it means the argument takes an array of array inputs. You can also click the status bar such as waiting, ready, canceled, etc to track all your tasks. You can use search bar to filter out your tasks of interest by typing user name or tasks name. It starts with your user name as default.
 
