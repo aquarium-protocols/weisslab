@@ -5,15 +5,15 @@ This documentation is used as a reference for using Aquarium to do cloning work 
 
 Samples and Items
 ---
-Samples and Items
+#### Samples and Items
 
 In Aquarium there is a hierarchy of different object types. In general, a sample is the definition of something like a plasmid called "pLAB1". Each sample has a specific sample ID. The sample pLAB1 has a specific sample type, in this case plasmid. Each sample has specific container types. For example, for a plasmid sample type, the containers are plasmid stocks, plasmid glycerol stocks, 1 ng/µl stocks, ect. There can be multiple copies of each container type of a sample that exist physically in the lab at the same time. Each container type item has a specific item ID in Aquarium.
 
-Creating a New Sample
+#### Creating a New Sample
 
 To define a new sample go to the inventory dropdown menu and select the desired sample type for the new sample. (Plasmid, Primer, Yeast Strain, etc.) Then, for example, to define a new plasmid click on the "New Plasmid" button at the bottom of the page. This pulls up a page with information fields to fill out. The "New Plasmid" page has fields for the name of the plasmids, the project of the sample, a description of the plasmid, sequencing verification and other relevant information. Other sample types have similar informaiton field pages that must be completed to define a new sample. When the fields are completed click on "Save Sample Information" and Aquarium will assign a unique sample number to the new sample.
 
-Creating New Items
+#### Creating New Items
 
 Creating new items of samples is relatively easy. For the most part items of samples will be created automatically through protocols, but there are times where an item may need to be entered outside of a protocol. To do this, go to the inventory page of the sample of which a new item is desired. Click on the desired container type and click the "New" button and Aquarium will create a new item with a unique item ID number.
 
@@ -87,9 +87,6 @@ The yeast transformation workflow takes a yeast strain id as input and produces 
 
 #### Input requirements
 Enter the sample ids of the yeast strains you want to make. For each yeast strain entered in the tasks, you need to enter the **Parent** and **Integrant** info in the sample field. The parent is to link a yeast strain as your parent strain for this transformation and integrant links to the plasmid you are planning to digest and transform into the parent strain to make the yeast transformed strain. You need to make sure there is at least one plasmid stock for the plasmid. You also need to make sure the yeast marker field in properly entered in the plasmid sample page. Noting that currently the workflow only processes plasmid entered into the integrant field since the workflow is intended for digest plasmid and integrate them into yeast genome by transformation.
-
-#### How to submit a task?
-.
 
 Yeast Strain QC
 ---
