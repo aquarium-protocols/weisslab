@@ -27,7 +27,7 @@ Creating new items of samples is relatively easy. For the most part items of sam
 
 Common Task Routines
 ---
-Assume a task prototype has the name of Awesome Task (such as Gateway Cloning). To enter new tasks and track all existing tasks progress and information, go to Tasks > Awesome Tasks. You can click the button New Awesome Task to enter inputs for new tasks: you can enter anything that helps you recognize in the Name field, leave the Status as waiting by default, enter the rest of inputs by either using the selection UI by clicking the button besides the input box or directly enter the inputs referring to the input requirements of each specific task documentation in the following sections. If an argument input has "+", "-" buttons, it means the argument takes an array of inputs, if the input has two "+", "-" button, it means the argument takes an array of array inputs. You can also click the status bar such as waiting, ready, canceled, etc to track all your tasks. You can use search bar to filter out your tasks of interest by typing user name or tasks name. It starts with your user name as default.
+Assume a task prototype has the name of Awesome Task (such as Gateway Cloning). To enter new tasks and track all existing tasks progress and information, go to Tasks > Awesome Tasks. You can click the button New Awesome Task to enter inputs for new tasks: you can enter anything that helps you recognize in the Name field, leave the Status as waiting by default, enter the rest of input arguments by either using the selection UI by clicking the button besides the input box or directly enter the inputs referring to the input requirements of each specific task documentation in the following sections. If an argument has "+", "-" buttons, it means the argument takes an array of inputs, if an argument has two "+", "-" button, it means the argument takes an array of array inputs. You can also click the status bar such as waiting, ready, canceled, etc to track all your tasks. You can use search bar to filter out your tasks of interest by typing user name or tasks name. It starts with your user name as default.
 
 To actually carry out the Awesome Task for real in the wetlab, in most cases (except for Sequencing Verification) you need to schedule the metacol/protocols corresponding to this Awesome Task. Noting that it only needs to be started once to execute all the Awesome Tasks that are waiting or ready, so the best practice is to start this regularly every day at a determined time so users can enter their tasks before that time. To start the metacol/protocols, go to Protocols > Under Version Control, find the Github repo tree, click workflows/metacol, then click the file named awesome_task.oy, leave the debug_mode empty, assign to a group that is going to experimentally perform all the protocols, normally choose technicians, then click Launch! All the protocols will then be subsequently scheduled and can be accessed from Protocols > Pending Jobs.
 
@@ -43,7 +43,11 @@ The Fragment Construction workflow takes fragment sample id as input and produce
 For each fragment, it finds the 1ng/µL plasmid stock of the fragment. If a 1ng/µL plasmid stock does not exist, it will try to dilute from the plasmid stock if there is any. It also finds the primer aliquot for the forward primer and reverse primer. It uses the T Anneal data in the forward and reverse primer field and uses the lower of the two as the desired annealing temperature for the PCR. The workflow first clusters all PCRs into 3 temperature groups, >= 70 C, 67 -70 C, < 67 C based on the desired annealing temperature. Then it finds the lowest annealing temperature in each group and uses that as the final annealing temperature. The workflow runs the PCR reactions for all fragments based on above information and stocks it finds, then pours a number of gels based on the number of PCR reactions, runs the gel and then cut the gel based on the length info in the fragment field, finally purifies the gel and results in a fragment stock with concentration recorded in the datum field and placed in the M20 boxes. If a gel band does not match the length info, the corresponding gel lane will not be cut and no fragment stock will be produced for that fragment.
 
 #### Input requirements
-Enter the sample id of the fragment in the fragments argument, it can also be an array of sampld ids. For each submitted fragment, you need to enter **Length**, **Template**, **Forward Primer**, **Reverse Primer**, which can be edited in the fragment sample page by clicking Edit Fragment Information. The template can be a plasmid, fragment, yeast strain, or E coli strain. For plasmid, you need plasmid stock or 1ng/µL plasmid stock existed in the inventory.
+| Argument name   |   Data type | Data structure | Inventory type | Sample property |
+|:---------- |:------------- |:------------- |:------------- |:------------- |
+| fragments  |  sample id |  array | Fragment | Length, Template, Forward Primer, Reverse Primer  |
+
+The template can be a plasmid, fragment, yeast strain, or E coli strain.
 
 | Template   |      Inventory in container needed |
 |:---------- |:------------- |
@@ -92,7 +96,7 @@ The plasmid extraction workflow takes an E coli Plate of Plasmid with id in plat
 #### Input requirements
 | Argument name   |   Data type | Data structure | Inventory type | Sample property |
 |:---------- |:------------- |:------------- |:------------- |:------------- |
-| plate_ids  |  item ids  | array | E coli Plate of Plasmid | Bacterial Marker (e.g. Amp, Kan, etc) |
+| plate_ids  |  item id  | array | E coli Plate of Plasmid | Bacterial Marker (e.g. Amp, Kan, etc) |
 | num_colonies | integer | array | N/A | N/A |
 
 Restriction Digest
@@ -101,9 +105,9 @@ Restriction Digest
 The restriction digest workflow takes in Plasmid Stocks, performs digestion with enzymes defined in the Plasmid sample Restriction Enzymes property, pours gels, runs gels, and images gels with image uploaded to Aquarium.
 
 #### Input requirements
-| Argument name   |      Id type required |  Data structure | Sample property |
-|:---------- |:------------- |:------------- |:------------- |
-| plasmid_stock_ids  |  item ids of Plasmid Stock  | array | Restriction Enzymes (e.g. PmeI, EcoRI, etc) |
+| Argument name   |   Data type | Data structure | Inventory type | Sample property |
+|:---------- |:------------- |:------------- |:------------- |:------------- |
+| plasmid_stock_ids  |  item id  | array | Plasmid Stock | Restriction Enzymes (e.g. PmeI, EcoRI, etc) |
 
 Sequencing
 ---
@@ -111,10 +115,10 @@ Sequencing
 The sequencing workflow takes plasmid stocks and prepares sequencing reaction mix in stripwells with corresponding primer stocks. It submits orders to Genewiz and send to do Sanger sequencing. When sequencing results are back, it guides the technicians to upload the results into Aquarium.
 
 #### Input requirements
-| Argument name   |      Id type required |  Data structure | Sample property |
-|:---------- |:------------- |:------------- |:------------- |
-| plasmid_stock_ids  |  item ids of plasmid stocks or fragment stocks  | array | Not required |
-| primer_ids | sample ids of primers | array of arrays | Not required |
+| Argument name   |   Data type | Data structure | Inventory type | Sample property |
+|:---------- |:------------- |:------------- |:------------- |:------------- |
+| plasmid_stock_ids  |  item id | array | Plasmid Stock or Fragment Stock | Not required |
+| primer_ids | sample id | array of arrays | Primer | Not required |
 
 Each item id in the plasmid_stock_ids uses the corresponding subarray of primer_ids to set up sequencing reaction.
 
