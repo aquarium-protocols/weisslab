@@ -27,7 +27,7 @@ Deleting Samples
 
 Common Routines
 ---
-Assume a task prototype has the name of Awesome Task (such as Gateway Cloning). To enter new tasks and track all existing tasks progress and information, go to Tasks > Awesome Tasks. You can click the button New Awesome Task to enter inputs for new tasks: you can enter anything that helps you recognize in the Name field, leave the Status as waiting by default, enter the rest of arguments referring to the input requirements of each specific task documentation in the following sections. If an argument input has "+", "-" buttons, it means the argument takes an array of inputs, if the input has two "+", "-" button, it means the argument takes an array of array inputs. You can also click the status bar such as waiting, ready, canceled, etc to track all your tasks. You can use search bar to filter out your tasks of interest by typing user name or tasks name. It starts with your user name as default.
+Assume a task prototype has the name of Awesome Task (such as Gateway Cloning). To enter new tasks and track all existing tasks progress and information, go to Tasks > Awesome Tasks. You can click the button New Awesome Task to enter inputs for new tasks: you can enter anything that helps you recognize in the Name field, leave the Status as waiting by default, enter the rest of inputs by either using the selection UI by clicking the button besides the input box or directly enter the inputs referring to the input requirements of each specific task documentation in the following sections. If an argument input has "+", "-" buttons, it means the argument takes an array of inputs, if the input has two "+", "-" button, it means the argument takes an array of array inputs. You can also click the status bar such as waiting, ready, canceled, etc to track all your tasks. You can use search bar to filter out your tasks of interest by typing user name or tasks name. It starts with your user name as default.
 
 To actually carry out the Awesome Task for real in the wetlab, in most cases (except for Sequencing Verification) you need to schedule the metacol/protocols corresponding to this Awesome Task. Noting that it only needs to be started once to execute all the Awesome Tasks that are waiting or ready, so the best practice is to start this regularly every day at a determined time so users can enter their tasks before that time. To start the metacol/protocols, go to Protocols > Under Version Control, find the Github repo tree, click workflows/metacol, then click the file named awesome_task.oy, leave the debug_mode empty, assign to a group that is going to experimentally perform all the protocols, normally choose technicians, then click Launch! All the protocols will then be subsequently scheduled and can be accessed from Protocols > Pending Jobs.
 
@@ -70,7 +70,11 @@ Gateway Cloning
 The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
 
 #### Input requirements
-You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker info entered in the sample page.
+| Argument name   |      Id type required |  Data structure | Sample property |
+|:---------- |:------------- |:------------- |:------------- |
+| ENTRs  |  sample ids of Plasmid  | array (length of 2) | Not required |
+| DEST |  | sample id of Plasmid |  | single integer | Not required |
+| DEST_result |  | sample id of Plasmid |  | single integer | Bacterial Marker (e.g. Amp, Kan, etc) |
 
 Plasmid Verification
 ---
@@ -83,18 +87,23 @@ Enter the item id of the E coli plate in plate_ids that you want to extract and 
 Plasmid Extraction
 ---
 #### How it works?
-The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
+The plasmid extraction workflow takes an E coli Plate of Plasmid with id in plate_ids, picks a number of colonies based on input in num_colonies, starts overnights in corresponding selective media using  info defined in the Plasmid sample Bacterial Marker property, then performs miniprep to produce plasmid stocks.
 
 #### Input requirements
-You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker info entered in the sample page.
+| Argument name   |      Id type required |  Data structure | Sample property |
+|:---------- |:------------- |:------------- |:------------- |
+| plate_ids  |  item ids of E coli Plate of Plasmid  | array | Bacterial Marker (e.g. Amp, Kan, etc) |
+| num_colonies |  | integer ranging from 1 to 10 | array | N/A |
 
 Restriction Digest
 ---
 #### How it works?
-The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
+The restriction digest workflow takes in Plasmid Stocks, performs digestion with enzymes defined in the Plasmid sample Restriction Enzymes property, pours gels, runs gels, and images gels with image uploaded to Aquarium.
 
 #### Input requirements
-You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker info entered in the sample page.
+| Argument name   |      Id type required |  Data structure | Sample property |
+|:---------- |:------------- |:------------- |:------------- |
+| plasmid_stock_ids  |  item ids of Plasmid Stock  | array | Restriction Enzymes (e.g. PmeI, EcoRI, etc) |
 
 Sequencing
 ---
@@ -102,10 +111,10 @@ Sequencing
 The sequencing workflow takes plasmid stocks and prepares sequencing reaction mix in stripwells with corresponding primer stocks. It submits orders to Genewiz and send to do Sanger sequencing. When sequencing results are back, it guides the technicians to upload the results into Aquarium.
 
 #### Input requirements
-| Argument name   |      Id type required |  Data structure |
-|:---------- |:------------- |:------------- |
-| plasmid_stock_ids  |  item ids of plasmid stocks or fragment stocks  | array |
-| primer_ids | sample ids of primers | array of arrays |
+| Argument name   |      Id type required |  Data structure | Sample property |
+|:---------- |:------------- |:------------- |:------------- |
+| plasmid_stock_ids  |  item ids of plasmid stocks or fragment stocks  | array | Not required |
+| primer_ids | sample ids of primers | array of arrays | Not required |
 
 Each item id in the plasmid_stock_ids uses the corresponding subarray of primer_ids to set up sequencing reaction.
 
