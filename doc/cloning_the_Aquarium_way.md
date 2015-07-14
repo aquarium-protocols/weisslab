@@ -11,7 +11,7 @@ In Aquarium there is a hierarchy of different object types. In general, a sample
 
 #### Creating a New Sample
 
-To define a new sample go to the inventory dropdown menu and select the desired sample type for the new sample. (Plasmid, Primer, Yeast Strain, etc.) Then, for example, to define a new plasmid click on the "New Plasmid" button at the bottom of the page. This pulls up a page with information fields to fill out. The "New Plasmid" page has fields for the name of the plasmids, the project of the sample, a description of the plasmid, sequencing verification and other relevant information. Other sample types have similar information field pages that must be completed to define a new sample. When the fields are completed click on "Save Sample Information" and Aquarium will assign a unique sample id to the new sample.
+To define a new sample go to the inventory dropdown menu and select the desired sample type for the new sample. (Plasmid, Primer, Yeast Strain, etc.) Then, for example, to define a new plasmid click on the "New Plasmid" button at the bottom of the page. This pulls up a page with information fields to fill out. The "New Plasmid" page has fields for the name of the plasmids, the project of the sample, a description of the plasmid, sequencing verification and other relevant information. Other sample types have similar information field pages that must be completed to define a new sample. Some fields may be left unfilled but some fields are required if you are doing a specific task with it, you can check out the Input requirements section for each task to determine what's required. When the fields are completed, click on "Save Sample Information" and Aquarium will assign a unique sample id to the new sample.
 
 #### Creating New Items
 
