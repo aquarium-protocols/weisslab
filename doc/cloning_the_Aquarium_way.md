@@ -73,8 +73,8 @@ The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a D
 | Argument name   |      Id type required |  Data structure | Sample property |
 |:---------- |:------------- |:------------- |:------------- |
 | ENTRs  |  sample ids of Plasmid  | array (length of 2) | Not required |
-| DEST |  | sample id of Plasmid |  | single integer | Not required |
-| DEST_result |  | sample id of Plasmid |  | single integer | Bacterial Marker (e.g. Amp, Kan, etc) |
+| DEST | sample id of Plasmid | single integer | Not required |
+| DEST_result | sample id of Plasmid | single integer | Bacterial Marker (e.g. Amp, Kan, etc) |
 
 Plasmid Verification
 ---
@@ -93,7 +93,7 @@ The plasmid extraction workflow takes an E coli Plate of Plasmid with id in plat
 | Argument name   |      Id type required |  Data structure | Sample property |
 |:---------- |:------------- |:------------- |:------------- |
 | plate_ids  |  item ids of E coli Plate of Plasmid  | array | Bacterial Marker (e.g. Amp, Kan, etc) |
-| num_colonies |  | integer ranging from 1 to 10 | array | N/A |
+| num_colonies | integer ranging from 1 to 10 | array | N/A |
 
 Restriction Digest
 ---
