@@ -70,7 +70,7 @@ Gateway Cloning
 The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
 
 #### Input requirements
-You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker and Restriction Enzyme Info entered in the sample page.
+You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker info entered in the sample page.
 
 Plasmid Verification
 ---
@@ -79,6 +79,35 @@ The plasmid verification workflow takes an E coli Plate of Plasmid, produces pla
 
 #### Input requirements
 Enter the item id of the E coli plate in plate_ids that you want to extract and verify plasmid from, enter a number in num_colonies to indicate how many colonies you want to pick from each plate and also enter **sample id** of primers for setting up sequencing reaction for extracted plasmid from each plate. For each E coli plate of plasmid, you need to enter the **Bacterial Marker** info (Amp, Kan or Chlor) in the plasmid sample field. You need to specify num_colonies (a number that ranges from 1-10) and primer_ids (an array of primer sample ids) for each plate in the task input. Notably, since each plate_id corresponds to an array of primers, the primer_ids for all plate_ids will be an array of arrays. Apparently, the array length of plate_ids, num_colonies, primer_ids should be the same.
+
+Plasmid Extraction
+---
+#### How it works?
+The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
+
+#### Input requirements
+You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker info entered in the sample page.
+
+Restriction Digest
+---
+#### How it works?
+The gateway cloning workflow takes 2 ENTR plasmid and 1 DEST plasmid to make a DEST_result plasmid. The gateway.rb takes plasmid stocks of 2 ENTR plasmid and 1 DEST plasmid and performs an LR reaction in a stripwell. Then gateway_transformation.rb transforms the contents in the stripwell into competent cell, plate_ecoli_transformation.rb plates the transformed aliquot on to selective media plate and incubate, then check_and_store_plate.rb records the num_of_colony on the plate and store the plate in a 4 C fridge.
+
+#### Input requirements
+You need to enter the **sample id** of the plasmid in ENTRs, DEST, and DEST_result. The ENTRs needs to be an array of 2 sample ids. The plasmid stocks for ENTRS and DEST need to be existed. The DEST_result plasmid needs Bacterial Marker info entered in the sample page.
+
+Sequencing
+---
+#### How it works?
+The sequencing workflow takes plasmid stocks and prepares sequencing reaction mix in stripwells with corresponding primer stocks. It submits orders to Genewiz and send to do Sanger sequencing. When sequencing results are back, it guides the technicians to upload the results into Aquarium.
+
+#### Input requirements
+| Argument name   |      Id type required |  Data structure |
+|:---------- |:------------- |:------------- |
+| plasmid_stock_ids  |  item ids of plasmid stocks or fragment stocks  | array |
+| primer_ids | sample ids of primers | array of arrays |
+
+Each item id in the plasmid_stock_ids uses the corresponding subarray of primer_ids to set up sequencing reaction.
 
 Yeast Transformation
 ---
