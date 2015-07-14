@@ -17,13 +17,13 @@ To define a new sample go to the inventory dropdown menu and select the desired 
 
 Creating new items of samples is relatively easy. For the most part items of samples will be created automatically through protocols, but there are times where an item may need to be entered outside of a protocol. To do this, go to the inventory page of the sample of which a new item is desired. Click on the desired container type and click the "New" button and Aquarium will create a new item with a unique item id number.
 
-#### Creating New Sample Types
+<!-- #### Creating New Sample Types
 
 #### Creating New Container Types
 
 #### Deleting Items
 
-#### Deleting Samples
+#### Deleting Samples -->
 
 Common Task Routines
 ---
