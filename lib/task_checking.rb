@@ -132,7 +132,7 @@ def sample_check ids, p={}
           warnings.push("#{sample_field_name} requires #{template_stock_hash[template.sample_type.name].join(' or ')}.") if template_stocks.empty?
         when "Length"
           warnings.push "#{sample_field_name} requires a number greater than 0." unless property > 0
-        when "Bacterial Marker", "Yeast Marker"
+        when "Bacterial Marker", "Yeast Marker", "Restriction Enzymes"
           warnings.push "#{sample_field_name} requires a nonempty string." unless property.length > 0
         when "Parent"
           yid = property.id
