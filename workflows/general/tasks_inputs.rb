@@ -151,7 +151,11 @@ class Protocol
         task = find(:task, id: tid)[0]
         task.simple_spec.each do |variable_name, ids|
           io_hash[variable_name] = [] if idx == 0
-          io_hash[variable_name].concat ids
+          if ids.is_a? Array
+            io_hash[variable_name].concat ids
+          else
+            io_hash[variable_name].push ids
+          end
           if idx == io_hash[:task_ids].length - 1
             io_hash[:size] = io_hash[variable_name].length
           end
