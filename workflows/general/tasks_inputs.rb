@@ -10,7 +10,7 @@ class Protocol
     {
       io_hash: {},
       debug_mode: "Yes",
-      task_name: "Fragment Construction",
+      task_name: "Gateway Cloning",
       group: "technicians"
     }
   end
