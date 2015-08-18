@@ -152,7 +152,11 @@ class Protocol
         task.simple_spec.each do |variable_name, ids|
           io_hash[variable_name] = [] if idx == 0
           if ids.is_a? Array
-            io_hash[variable_name].concat ids
+            if io_hash[:task_name] == "Gateway Cloning"
+              io_hash[variable_name].push ids
+            else
+              io_hash[variable_name].concat ids
+            end
           else
             io_hash[variable_name].push ids
           end
