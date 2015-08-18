@@ -1,11 +1,155 @@
 needs "aqualib/lib/standard"
+needs "aqualib/lib/tasking"
 
 module Cloning
 
   def self.included klass
     klass.class_eval do
       include Standard
+      include Tasking
     end
+  end
+
+  # this function process fragment ids that passed task_inputs, return their PCR recipe template stock, primer aliquts, annealing temperature and length, also return samples whose stock need to be diluted.
+  def fragment_recipe id, p={}
+    fragment = find(:sample, { id: id })[0]
+    props = fragment.properties.deep_dup
+    dilute_sample_ids = []  # primer or template ids whose stock needs to be diluted
+    fwd = props["Forward Primer"]
+    rev = props["Reverse Primer"]
+    template = props["Template"]
+    length = props["Length"]
+    # compute the annealing temperature
+    t1 = fwd.properties["T Anneal"]
+    t2 = rev.properties["T Anneal"]
+    # get items associated with primers and template
+    fwd_items = fwd.in "Primer Aliquot"
+    rev_items = rev.in "Primer Aliquot"
+    dilute_sample_ids.push fwd.id if fwd_items.empty?
+    dilute_sample_ids.push rev.id if rev_items.empty?
+
+    if template.sample_type.name == "Plasmid"
+      template_items = template.in "1 ng/µL Plasmid Stock"
+      if template_items.empty? && template.in("Plasmid Stock").empty?
+        template_items = template.in "Gibson Reaction Result"
+      elsif template_items.empty? && template.in("Plasmid Stock").any?
+        dilute_sample_ids.push template.id
+      end
+    elsif template.sample_type.name == "Fragment"
+      template_items = template.in "1 ng/µL Fragment Stock"
+      dilute_sample_ids.push template.id if template_items.empty?
+    elsif template.sample_type.name == "E coli strain"
+      template_items = template.in "E coli Lysate"
+      if template_items.length == 0
+        template_items = template.in "Genome Prep"
+        template_items = template_items.reverse() #so we take the last one.
+      end
+    elsif template.sample_type.name == "Yeast Strain"
+      template_items = template.in "Lysate"
+      if template_items.length == 0
+        template_items = template.in "Yeast cDNA"
+      end
+    end
+
+    return {
+      dilute_sample_ids: dilute_sample_ids,
+      fragment: fragment,
+      length: length,
+      fwd: fwd_items[0],
+      rev: rev_items[0],
+      template: template_items[0],
+      tanneal: [t1,t2].min
+    }
+  end
+
+  # dilute stocks of samples with ids. e.g. dilute primer stock of primer to primer aliquot, return the diluted stocks to be released in the protocol
+  def dilute_samples ids
+    ids = [ids] unless ids.is_a? Array
+    ids.uniq!
+    dilute_stocks = ids.collect do |id|
+      dilute_sample = find(:sample, id: id)[0]
+      dilute_stock = dilute_sample.in(dilute_sample.sample_type.name + " Stock")[0]
+    end
+    template_stocks, primer_stocks = [], []
+    dilute_stocks.each do |stock|
+      if ["Plasmid Stock", "Fragment Stock"].include? stock.object_type.name
+        template_stocks.push stock
+      elsif ["Primer Stock"].include? stock.object_type.name
+        primer_stocks.push stock
+      end
+    end
+
+    take dilute_stocks, interactive: true, method: "boxes"
+
+    template_diluted_stocks = []
+    if template_stocks.any?
+      template_stocks_need_to_measure = template_stocks.select { |s| !s.datum[:concentration] }
+      while template_stocks_need_to_measure.length > 0
+        data = show {
+          title "Nanodrop the following template/fragment stocks."
+          template_stocks_need_to_measure.each do |ts|
+            get "number", var: "c#{ts.id}", label: "Go to B9 and nanodrop tube #{ts.id}, enter DNA concentrations in the following", default: 100
+          end
+        }
+        template_stocks_need_to_measure.each do |ts|
+          ts.datum = { concentration: data[:"c#{ts.id}".to_sym] }
+          ts.save
+        end
+        template_stocks_need_to_measure = template_stocks.select { |s| !s.datum[:concentration] }
+      end
+
+      # produce 1 ng/µL Plasmid Stocks
+      template_diluted_stocks = template_stocks.collect { |s| produce new_sample s.sample.name, of: s.sample.sample_type.name, as: ("1 ng/µL " + s.sample.sample_type.name + " Stock") }
+
+      # collect all concentrations
+      concs = template_stocks.collect {|s| s.datum[:concentration].to_f}
+      water_volumes = concs.collect {|c| c-1}
+
+      # build a checkable table for user
+      tab = [["Newly labled tube","Template stock, 1 µL","Water volume"]]
+      template_stocks.each_with_index do |s,idx|
+        tab.push([template_diluted_stocks[idx].id, { content: s.id, check: true }, { content: water_volumes[idx].to_s + " µL", check: true }])
+      end
+
+      # display the dilution info to user
+      show {
+        title "Make 1 ng/µL Template Stocks"
+        check "Grab #{template_stocks.length} 1.5 mL tubes, label them with #{template_diluted_stocks.join(", ")}"
+        check "Add template stocks and water into newly labeled 1.5 mL tubes following the table below"
+        table tab
+        check "Vortex and then spin down for a few seconds"
+      }
+    end
+
+    primer_aliquots = []
+    if primer_stocks.any?
+      primer_aliquots = primer_stocks.collect { |p| produce new_sample p.sample.name, of: "Primer", as: "Primer Aliquot" }
+      show {
+        title "Grab #{primer_aliquots.length} 1.5 mL tubes"
+        check "Grab #{primer_aliquots.length} 1.5 mL tubes, label with following ids."
+        check primer_aliquots.collect { |p| "#{p}"}
+        check "Add 90 µL of water into each above tube."
+      }
+      show {
+        title "Make primer aliquots"
+        note "Add 10 µL from primer stocks into each primer aliquot tube using the following table."
+        table [["Primer Aliquot id", "Primer Stock, 10 µL"]].concat (primer_aliquots.collect { |p| "#{p}"}.zip primer_stocks.collect { |p| { content: p.id, check: true } })
+      }
+    end
+
+    # release all the items
+    release dilute_stocks, interactive: true, method: "boxes"
+    return template_diluted_stocks + primer_aliquots
+  end
+
+  # pass primer ids here and figure out which primer needs to dilute, return the primer ids that needs to be diluted.
+  def primers_need_to_dilute ids
+    ids = [ids] unless ids.is_a? Array
+    dilute_sample_ids = ids.select do |id|
+      primer = find(:sample, id: id)[0]
+      primer.in("Primer Stock").any? && primer.in("Primer Aliquot").empty?
+    end
+    return dilute_sample_ids
   end
 
   def fragment_info fid, p={}
@@ -84,6 +228,7 @@ module Cloning
         template_items = template.in "E coli Lysate"
         if template_items.length == 0
           template_items = template.in "Genome Prep"
+          template_items = template_items.reverse() #so we take the last one.
         end
       elsif template.sample_type.name == "Yeast Strain"
         template_items = template.in "Lysate"
@@ -151,8 +296,7 @@ module Cloning
 
   end # # # # # # #
 
-  def load_samples_variable_vol headings, ingredients, collections, options = {} # ingredients must be a string or number
-    opts = { title_prefix: "Load" }.merge options
+  def load_samples_variable_vol headings, ingredients, collections # ingredients must be a string or number
 
     if block_given?
       user_shows = ShowBlock.new.run(&Proc.new)
@@ -185,429 +329,12 @@ module Cloning
       end
 
       show {
-          title "#{opts[:title_prefix]} #{col.object_type.name} #{col.id}"
+          title "Load #{col.object_type.name} #{col.id}"
           table heading + tab
           raw user_shows
         }
     end
 
-  end ### yeast_transformation_status
-
-  def task_status p={}
-
-    # This function is to process tasks of which the status is waiting or ready. If ready_condition of the task is met, set the status to ready, otherwise, set the status to waiting.
-    # This function takes a hash as an argument. group defines whose tasks to process based on their owners belongings to the group and name defines which task_prototype of tasks to process. For example, group: technicians, name: "Yeast Strain QC" will process all Yeast Strain QC tasks whose owners belong to a group called cloning. Another example, group: yang, name: "Fragment Construction" will process all Fragment Construction tasks whose owner belong to a group called yang.
-
-    params = ({ group: false, name: "", notification: "off" }).merge p
-    raise "Supply a Task name for the task_status function as tasks_status name: task_name" if params[:name].length == 0
-    tasks_all = find(:task,{task_prototype: { name: params[:name] }})
-    tasks = []
-    # filter out tasks based on group input
-    if params[:group] && !params[:group].empty?
-      user_group = params[:group] == "technicians"? "cloning": params[:group]
-      group_info = Group.find_by_name(user_group)
-      tasks_all.each do |t|
-        if t.user
-          tasks.push t if t.user.member? group_info.id
-        end
-      end
-    else
-      tasks = tasks_all
-    end
-    waiting = tasks.select { |t| t.status == "waiting" }
-    ready = tasks.select { |t| t.status == "ready" }
-
-    # cycling through waiting and ready to make sure tasks inputs are valid
-
-    (waiting + ready).each do |t|
-
-      case params[:name]
-
-      when "Discard Item"
-        t[:item_ids] = { belong_to_user: [], not_belong_to_user: [] }
-        t.simple_spec[:item_ids].each do |id|
-          if find(:item, id: id)[0].sample.owner == t.user.login
-            t[:item_ids][:belong_to_user].push id
-          else
-            t[:item_ids][:not_belong_to_user].push id
-          end
-        end
-        ready_conditions = t[:item_ids][:belong_to_user].length == t.simple_spec[:item_ids].length
-
-      when "Fragment Construction"
-        t[:fragments] = { ready_to_build: [], not_ready_to_build: [] }
-        t.simple_spec[:fragments].each do |fid|
-          if params[:notification].downcase == "off"
-            info = fragment_info fid, check_mode: true
-          else
-            info = fragment_info fid, task_id: t.id, check_mode: true
-          end
-
-          if !info
-            t[:fragments][:not_ready_to_build].push fid
-          else
-            t[:fragments][:ready_to_build].push fid
-          end
-        end
-        ready_conditions = t[:fragments][:ready_to_build].length == t.simple_spec[:fragments].length
-
-      when "Glycerol Stock"
-        t[:item_ids] = { ready: [], not_valid: [] }
-        t.simple_spec[:item_ids].each do |id|
-          if find(:item, id: id)[0].object_type.name.downcase.include? "overnight" or find(:item, id: id)[0].object_type.name.downcase.include? "plate"
-            t[:item_ids][:ready].push id
-          else
-            t[:item_ids][:not_valid].push id
-          end
-        end
-        ready_conditions = t[:item_ids][:ready].length == t.simple_spec[:item_ids].length
-
-      when "Gibson Assembly"
-        t[:fragments] = { ready_to_use: [], not_ready_to_use: [], need_to_build: []}
-        t.simple_spec[:fragments].each do |fid|
-          # info = fragment_info fid, check_mode: true
-          # info = true
-          # First check if there already exists fragment stock and if its length info is entered, it's ready to build.
-          fragment = find(:sample, id: fid)[0]
-          if fragment == nil
-            t[:fragments][:not_ready_to_use].push fid
-            t.notify "Fragment #{fid} does not exist in database.", job_id: jid
-          elsif fragment.in("Fragment Stock").length > 0 && fragment.properties["Length"] > 0
-            t[:fragments][:ready_to_use].push fid
-          elsif fragment.in("Fragment Stock").length > 0 && fragment.properties["Length"] == 0
-            t[:fragments][:not_ready_to_use].push fid
-          else
-            t[:fragments][:need_to_build].push fid
-          end
-        end
-        plasmid_condition = false
-        plasmid = find(:sample, id: t.simple_spec[:plasmid])[0]
-        if plasmid
-          bacterial_marker = plasmid.properties["Bacterial Marker"]
-          bacterial_marker = "" if !bacterial_marker
-          plasmid_condition = !bacterial_marker.empty?
-          t.notify "Bacterial Marker info required for plasmid #{t.simple_spec[:plasmid]}", job_id: jid if bacterial_marker.empty?
-        else
-          t.notify "No samples corresponding to plasmid #{t.simple_spec[:plasmid]}", job_id: jid
-        end
-        ready_conditions = t[:fragments][:ready_to_use].length == t.simple_spec[:fragments].length && plasmid_condition
-
-      when "Gateway Cloning"
-        t[:plasmids] = { not_ready: [] }
-        t[:input_plasmid_ids] = t.simple_spec[:ENTRs] + [t.simple_spec[:DEST]]
-
-        if t.simple_spec[:ENTRs].length != 2
-          t[:plasmids][:not_ready].push t.simple_spec[:ENTRs]
-          t.notify "ENTRs needs to be size of 2", job_id: jid
-        end
-
-        t[:input_plasmid_ids].each do |id|
-          plasmid = find(:sample, id: id)[0]
-          if plasmid == nil
-            t[:plasmids][:not_ready].push id
-            t.notify "Sample #{id} is not a valid sample.", job_id: jid
-          elsif plasmid.in("Plasmid Stock").length == 0
-            t[:plasmids][:not_ready].push id
-            t.notify "Plasmid stock required for sample #{id}", job_id: jid
-          end
-        end
-
-        output_plasmid = find(:sample, id: t.simple_spec[:DEST_result])[0]
-        marker = output_plasmid.properties["Bacterial Marker"] || ""
-        if marker.empty?
-          t[:plasmids][:not_ready].push t.simple_spec[:DEST_result]
-          t.notify "Bacterial Marker info required for sample #{t.simple_spec[:DEST_result]}", job_id: jid
-        end
-
-        ready_conditions = t[:plasmids][:not_ready].length == 0
-
-      when "Plasmid Verification"
-        length_check = t.simple_spec[:plate_ids].length == t.simple_spec[:num_colonies].length && t.simple_spec[:plate_ids].length == t.simple_spec[:primer_ids].length
-        t.notify "plate_ids, num_colonies, primer_ids need to have the same array length." if !length_check
-        t[:plate_ids] = { ready: [], not_ready: [] }
-        t.simple_spec[:plate_ids].each_with_index do |pid,idx|
-          if find(:item, id: pid)[0]
-            plate_ready = ["E coli Plate of Plasmid", "Plasmid Glycerol Stock"].include?(find(:item, id: pid)[0].object_type.name)
-            marker_ready = (find(:item, id: pid)[0].sample.properties["Bacterial Marker"] || "").length > 0
-            num_colonies_ready = (t.simple_spec[:num_colonies][idx] || 0).between?(0, 10)
-
-            if plate_ready && marker_ready && num_colonies_ready
-              t[:plate_ids][:ready].push pid
-            else
-              t[:plate_ids][:not_ready].push pid
-              t.notify "Item #{pid} need to be an E coli Plate of Plasmid or Plasmid Glycerol Stock", job_id: jid if !plate_ready
-              t.notify "Need Bacterial Marker info for sample corresponding to item #{pid}", job_id: jid if !marker_ready
-              t.notify "num_colonies for #{pid} need to be a number between 0,10", job_id: jid if !(t.simple_spec[:num_colonies][idx] || 0).between?(0, 10)
-            end
-          end
-        end
-
-        t[:primers] = { ready: [], no_aliquot: [] }
-        primer_ids = t.simple_spec[:primer_ids].flatten.uniq
-        primer_ids.each do |prid|
-          if prid != 0
-            primer = find(:sample, id: prid)[0]
-            if primer
-              if find(:sample, id: prid)[0].in("Primer Aliquot").length > 0
-                t[:primers][:ready].push prid
-              else
-                t[:primers][:no_aliquot].push prid
-                t.notify "Primer #{prid} has no primer aliquot.", job_id: jid
-              end
-            else
-              t.notify "#{prid} is not a valid sample id.", job_id: jid
-            end
-          elsif prid == 0
-            t[:primers][:ready].push prid
-          end
-        end
-
-        ready_conditions = length_check && t[:plate_ids][:ready].length == t.simple_spec[:plate_ids].length && t[:primers][:ready].length == primer_ids.length
-
-      when "Plasmid Extraction"
-        t[:plates] = { not_ready: [] }
-        if t.simple_spec[:plate_ids].length != t.simple_spec[:num_colonies].length
-          t[:plates][:not_ready].concat t.simple_spec[:plate_ids]
-          t.notify "plate_ids and num_colonies needs to have the same length", job_id: jid
-        end
-        t.simple_spec[:plate_ids].each_with_index do |id, idx|
-          plate = find(:item, id: id)[0]
-          if plate == nil
-            t[:plates][:not_ready].push id
-            t.notify "Plate #{id} is not an valid item.", job_id: jid
-          else
-            marker = plate.sample.properties["Bacterial Marker"] || ""
-            if marker.empty?
-              t[:plates][:not_ready].push id
-              t.notify "Bacterial Marker info required for sample of Plate #{id}", job_id: jid
-            elsif !(t.simple_spec[:num_colonies][idx] || 0).between?(1, 10)
-              t[:plates][:not_ready].push id
-            end
-          end
-        end
-        ready_conditions = t[:plates][:not_ready].length == 0
-
-      when "Restriction Digest"
-        t[:stocks] = { not_ready: [] }
-        t.simple_spec[:plasmid_stock_ids].each do |id|
-          stock = find(:item, id: id)[0]
-          if stock == nil
-            t[:stocks][:not_ready].push id
-            t.notify "Stock #{id} is not an valid item.", job_id: jid
-          elsif !(["Plasmid", "Fragment"].include? stock.sample.sample_type.name)
-            t[:stocks][:not_ready].push id
-            t.notify "Stock #{id} need to be an item of Plasmid or Fragment.", job_id: jid
-          elsif (stock.sample.properties["Restriction Enzymes"] || "").length == 0
-            t[:stocks][:not_ready].push id
-            t.notify "Stock #{id}'s sample needs to have Restriction Enzymes entered.", job_id: jid
-          end
-        end
-        ready_conditions = t[:stocks][:not_ready].length == 0
-
-      when "Sequencing"
-        t[:primers] = { not_ready: [] }
-
-        t.simple_spec[:primer_ids].flatten.uniq.each do |id|
-          primer = find(:sample, id: id)[0]
-          if primer == nil
-            t[:primers][:not_ready].push id
-            t.notify "Primer #{id} is not valid", job_id: jid
-          elsif primer.in("Primer Aliquot").length == 0
-            t[:primers][:not_ready].push id
-            t.notify "Primer #{id} has no primer aliquot.", job_id: jid
-          end
-        end
-
-        t[:stocks] = { not_ready: [] }
-
-        t.simple_spec[:plasmid_stock_ids].each do |id|
-          stock = find(:item, id: id)[0]
-          if stock == nil
-            t[:stocks][:not_ready].push id
-            t.notify "Stock #{id} is not an valid item.", job_id: jid
-          elsif !(["Plasmid", "Fragment"].include? stock.sample.sample_type.name)
-            t[:stocks][:not_ready].push id
-            t.notify "Stock #{id} need to be an item of Plasmid or Fragment.", job_id: jid
-          end
-        end
-
-        ready_conditions = t[:primers][:not_ready].length == 0 && t[:stocks][:not_ready].length == 0
-
-      when "Streak Plate"
-        t[:item_ids] = { ready: [], not_ready: [] }
-        accepted_object_types = ["Yeast Glycerol Stock", "Yeast Plate", "Plate"]
-        t.simple_spec[:item_ids].each do |id|
-          if find(:item, id: id)[0]
-            if accepted_object_types.include? find(:item, id: id)[0].object_type.name
-              t[:item_ids][:ready].push id
-            else
-              t[:item_ids][:not_ready].push id
-            end
-          end
-        end
-        ready_conditions = t[:item_ids][:ready].length == t.simple_spec[:item_ids].length
-
-      when "Yeast Transformation"
-        t[:yeast_strains] = { ready_to_build: [], not_ready_to_build: [] }
-        t.simple_spec[:yeast_transformed_strain_ids].each do |yid|
-          y = find(:sample, id: yid)[0]
-          parent_ready, integrant_ready = nil, nil
-          # check if competent aliquot/cell and plasmid stock are ready and send notifications
-          if y
-            if y.properties["Parent"]
-              parent_ready = y.properties["Parent"].in("Yeast Competent Aliquot").length > 0 || y.properties["Parent"].in("Yeast Competent Cell").length > 0
-              t.notify "No competent aliquot/cell for the parent strain of #{y}. Competent cells will be made when yeast competent cell workflow got run.", job_id: jid if !parent_ready
-            else
-              parent_ready = nil
-              t.notify "Parent strain not defined", job_id: jid
-            end
-
-            if y.properties["Integrant"]
-              integrant = y.properties["Integrant"]
-              if integrant.sample_type.name == "Plasmid" && integrant.properties["Yeast Marker"]
-                integrant_ready = integrant.in("Plasmid Stock").length > 0 && !integrant.properties["Yeast Marker"].empty?
-              elsif integrant.sample_type.name == "Fragment" && integrant.properties["Yeast Marker"]
-                integrant_ready = integrant.in("Fragment Stock").length > 0 && !integrant.properties["Yeast Marker"].empty?
-              end
-              t.notify "No stock exists or lack of Yeast Marker info for #{integrant.name}, integrant of yeast strain #{y}", job_id: jid if !integrant_ready
-            else
-              t.notify "No integrant defined for yeast strain #{y}.", job_id: jid
-            end
-          else
-            t.notify "Invalid yeast_transformed_strain_id #{yid}", job_id: jid
-          end
-
-          if parent_ready && integrant_ready
-            t[:yeast_strains][:ready_to_build].push yid
-          else
-            t[:yeast_strains][:not_ready_to_build].push yid
-          end
-        end
-
-        ready_conditions = t[:yeast_strains][:ready_to_build].length == t.simple_spec[:yeast_transformed_strain_ids].length
-
-      when "Yeast Strain QC"
-        length_check = t.simple_spec[:yeast_plate_ids].length == t.simple_spec[:num_colonies].length
-        t.notify "yeast_plate_ids need to have the same array length with num_colonies.", job_id: jid if !length_check
-        t[:yeast_plate_ids] = { ready_to_QC: [], not_ready_to_QC: [] }
-        t.simple_spec[:yeast_plate_ids].each_with_index do |yid, idx|
-          primer1 = nil
-          primer2 = nil
-          primer1 = find(:item, id: yid)[0].sample.properties["QC Primer1"].in("Primer Aliquot")[0] if find(:item, id: yid)[0].sample.properties["QC Primer1"]
-          primer2 = find(:item, id: yid)[0].sample.properties["QC Primer2"].in("Primer Aliquot")[0] if find(:item, id: yid)[0].sample.properties["QC Primer2"]
-          if primer1 && primer2 && (t.simple_spec[:num_colonies][idx] || 0).between?(0, 10)
-            t[:yeast_plate_ids][:ready_to_QC].push yid
-          else
-            t[:yeast_plate_ids][:not_ready_to_QC].push yid
-            t.notify "QC Primer 1 for yeast plate #{yid} does not have any primer aliquot.", job_id: jid if !primer1
-            t.notify "QC Primer 2 for yeast plate #{yid} does not have any primer aliquot.", job_id: jid if !primer2
-            t.notify "num_colonies for yeast plate #{yid} need to be a number between 0,10", job_id: jid if !(t.simple_spec[:num_colonies][idx] || 0).between?(0, 10)
-          end
-        end
-
-        ready_conditions = length_check && t[:yeast_plate_ids][:ready_to_QC].length == t.simple_spec[:yeast_plate_ids].length
-
-      when "Yeast Mating"
-        t[:yeast_strains] = { ready: [], not_valid:[] }
-
-        t.simple_spec[:yeast_mating_strain_ids].each do |yid|
-          if find(:sample, id: yid )[0].in("Yeast Glycerol Stock").length > 0
-            t[:yeast_strains][:ready].push yid
-          else
-            t[:yeast_strains][:not_valid].push yid
-          end
-        end
-
-        ready_conditions = t[:yeast_strains][:ready].length == 2 && t.simple_spec[:yeast_mating_strain_ids].length == 2 && t.simple_spec[:yeast_selective_plate_type].is_a?(String)
-
-      when "Yeast Competent Cell"
-        t[:yeast_strains] = { ready: [], not_valid:[], ready_to_streak: [], not_ready_to_streak: [] }
-
-        t.simple_spec[:yeast_strain_ids].each do |yid|
-          if (collection_type_contain yid, "Divided Yeast Plate", 60).length > 0
-            t[:yeast_strains][:ready].push yid
-          else
-            t[:yeast_strains][:not_valid].push yid
-            y = find(:sample, id: yid)[0]
-            if y
-              if (y.in "Yeast Glycerol Stock").length > 0
-                t[:yeast_strains][:ready_to_streak].push yid
-                t.notify "No grown divided yeast plate for the strain of #{yid}. Divded yeast plate will be generated by Streak Plate workflow.", job_id: jid
-              else
-                t[:yeast_strains][:not_ready_to_streak].push yid
-                t.notify "No grown divided yeast plate for the strain of #{yid}. Need glycerol stock in order to streak plate.", job_id: jid
-              end
-            end
-          end
-        end
-
-        ready_conditions = t[:yeast_strains][:ready].length == t.simple_spec[:yeast_strain_ids].length
-
-      else
-        show {
-          title "Under development"
-          note "The input checking function for this task #{params[:name]} is still under development."
-          note "#{t.id}"
-        }
-
-      end
-
-      if ready_conditions
-        set_task_status(t, "ready") if t.status != "ready"
-        t.save
-      else
-        set_task_status(t, "waiting") if t.status != "waiting"
-        t.save
-      end
-
-    end
-
-    task_status_hash = {
-      waiting_ids: (tasks.select { |t| t.status == "waiting" }).collect {|t| t.id},
-      ready_ids: (tasks.select { |t| t.status == "ready" }).collect {|t| t.id}
-    }
-
-    task_status_hash[:fragments] = ((waiting + ready).collect { |t| t[:fragments] }).inject { |all,part| all.each { |k,v| all[k].concat part[k] } } if ["Gibson Assembly", "Fragment Construction"].include? params[:name]
-
-    task_status_hash[:yeast_strains] = ((waiting + ready).collect { |t| t[:yeast_strains] }).inject { |all,part| all.each { |k,v| all[k].concat part[k] } } if ["Yeast Transformation","Yeast Competent Cell"].include? params[:name]
-
-    return task_status_hash
-
-  end ### task_status
-
-  # a function that returns a table of task information
-  def task_info_table task_ids
-
-    task_ids.compact!
-
-    if task_ids.length == 0
-      return []
-    end
-
-    tab = [[ "Task ids", "Task type", "Task name", "Task owner" ]]
-
-    task_ids.each do |tid|
-      task = find(:task, id: tid)[0]
-      tab.push [ tid, task.task_prototype.name, task.name, task.user.name ]
-    end
-
-    return tab
-
-  end ### task_info_table
-
-  # supply a poly fit data model name and size of the reaction, predit the time it will take
-  def time_prediction size, model_name
-    if size == 0
-      return 0
-    end
-    model_data = find(:sample, name: model_name)[0].properties["Model"]
-    model_array = model_data.split(",")
-    n = model_array.length - 1
-    time = 0
-    model_array.each_with_index do |p, idx|
-      time += p.to_f * size ** (n - idx)
-    end
-    return time.round(0)
   end
 
 end
