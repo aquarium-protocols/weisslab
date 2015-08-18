@@ -26,7 +26,11 @@ class Protocol
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
 
     # setup default values for io_hash.
-    io_hash = { entr_ids: [[]], dest_ids: [], dest_result_ids: [], debug_mode: "No" }.merge io_hash
+    io_hash = { ENTRs: [[]], DEST: [], DEST_result: [], debug_mode: "No" }.merge io_hash
+
+    io_hash[:entr_ids] = io_hash[:ENTRs]
+    io_hash[:dest_ids] = io_hash[:DEST]
+    io_hash[:dest_result_ids] = io_hash[:DEST_result]
 
     # Set debug based on debug_mode
     if io_hash[:debug_mode].downcase == "yes"
