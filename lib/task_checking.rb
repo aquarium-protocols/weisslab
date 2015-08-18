@@ -248,11 +248,13 @@ def task_status_check t
         when "plate_ids", "glycerol_stock_ids", "plasmid_item_ids"
           sample_ids = ids.collect { |id| find(:item, id: id)[0].sample.id }
           errors.concat sample_check(sample_ids, assert_property: "Bacterial Marker")[:errors]
+        when "ENTRs", "DEST"
+          errors.concat inventory_check(ids, inventory_types: "Plasmid Stock")[:errors]
         when "num_colonies"
           ids.each do |id|
             errors.push "A number between 0,10 is required for num_colonies" unless id.between?(0, 10)
           end
-        when "plasmid"
+        when "plasmid", "DEST_result"
           errors.concat sample_check(ids, assert_property: "Bacterial Marker")[:errors]
         when "yeast_transformed_strain_ids"
           sample_check_result = sample_check(ids, assert_property: "Parent")
