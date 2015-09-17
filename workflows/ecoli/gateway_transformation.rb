@@ -50,7 +50,7 @@ class Protocol
     transformed_aliquot_ids = transformed_aliquots.collect { |t| "#{t}" }
 
     # load competent cell aliquot from stripwell
-    load_samples_variable_vol(["Competent Cell Aliquot"],[transformed_aliquot_ids], stripwells, title_prefix: "Unload") {
+    load_samples_variable_vol(["Competent Cell Aliquot"],[transformed_aliquot_ids], stripwells) {
       note "Pieptte 1 µL from each well into labeled competent cell aliquot."
       note "Discard the stripwell into waste bin after unloading."
     }
