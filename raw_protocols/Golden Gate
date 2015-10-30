@@ -1,0 +1,29 @@
+Materials needed:
+
+BsaI, NEB# R0535,
+Antarctic Phosphatase, NEB#M0201
+Polynucleotide kinase, xxx
+T4 ligase
+T4 ligase buffer
+Mach 1 chemically competent cells
+HF BsaI
+HF BamHI
+Procedure
+
+Digest and dephosphorylate plasmid.
+Use BsaI (NEB# R0535, standard enzyme), NEB buffer 4.
+Digest with 1 ul of enzyme for 1 hr. 37°C
+Add 1 ul more of enzyme and digest additional 1 hr. 37°C.
+Do dephosphorylation of vector during digest using Antarctic Phosphatase (NEB# MO201). Note: This enzyme can be heat inactivated, CIP cannot.
+Heat inactivate both enzymes 65°C 20 min.
+Do not purify! Use as is.
+Reagent	Amount (uL)
+10x NEB Buffer 4	3
+Phosphorylate and hybridize oligonucleotide inserts.
+Polynucleotide Kinase (PNK)
+Regular ligation Buffer (not rapid, it contains PEG which causes problems when doing heat inactivation. If you use ligation buffer (vs PNK buffer) it already contains ATP so you don’t need to add that)
+Incubate ~1.5 hrs 37oC
+Heat inactivate 20 min. 65oC
+Add 4ul 0.5 M NaCl per reaction for hybridization.
+Place in boiling water bath for 2 min., then remove water bath from heat source (still in the water bath) and allow to cool to room temperature.
+Stop
