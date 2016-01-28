@@ -150,7 +150,7 @@ class Protocol
       io_hash[:task_ids].each_with_index do |tid, idx|
         task = find(:task, id: tid)[0]
         io_hash[:plasmid_stock_ids].concat task.simple_spec[:plasmid_stock_ids]
-        io_hash[:primer_ids].concat task.simple_spec[:plasmid_stock_ids]
+        io_hash[:primer_ids].concat task.simple_spec[:primer_ids]
       end
 
     when "Yeast Cytometry", "Gateway Cloning", "Plasmid Extraction"
