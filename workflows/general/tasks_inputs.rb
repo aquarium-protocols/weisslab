@@ -145,6 +145,14 @@ class Protocol
       # additional io_hash key: values
       io_hash[:volume] = 2 if io_hash[:task_name] == "Yeast Competent Cell"
 
+    when "Sequencing"
+      io_hash = { plasmid_stock_ids: [], primer_ids: [] }.merge io_hash
+      io_hash[:task_ids].each_with_index do |tid, idx|
+        task = find(:task, id: tid)[0]
+        io_hash[:plasmid_stock_ids].concat task.simple_spec[:plasmid_stock_ids]
+        io_hash[:primer_ids].concat task.simple_spec[:plasmid_stock_ids]
+      end
+
     when "Yeast Cytometry", "Gateway Cloning", "Plasmid Extraction"
       # a general task processing script without uniqing variable content.
       io_hash[:task_ids].each_with_index do |tid, idx|
