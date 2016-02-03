@@ -51,7 +51,9 @@ class Protocol
 
     # load competent cell aliquot from stripwell
     load_samples_variable_vol(["Competent Cell Aliquot"],[transformed_aliquot_ids], stripwells) {
-      note "Pieptte 1 µL from each well into labeled competent cell aliquot."
+      note "Pieptte 2 µL from each well into labeled competent cell aliquot."
+      note "Gently stir plasmid DNA and competent cells with end of pipette tip"
+      warning "Do NOT mix by pipetting up and down."
       note "Discard the stripwell into waste bin after unloading."
     }
 
@@ -88,7 +90,7 @@ class Protocol
       title "Incubate on ice and add S.O.C"
       note "Incubate all tubes on ice for 2 minutes."
       timer initial: { hours: 0, minutes: 2, seconds: 0}
-      note "Add 0.9 mL of room temperature S.O.C medium into each tube after incubation."
+      note "Add 0.75 mL (750 uL) of room temperature S.O.C medium into each tube after incubation."
       note transformed_aliquot_ids.join(", ")
       warning "S.O.C is made by dissolving 0.5 mL of 20% glucose in 25 ml of SOB. Make sure that the SOC is clear and not cloudy (contaminated)."
     }
@@ -97,7 +99,7 @@ class Protocol
       title "Incubate and shake at 37 C"
       note "Place the followng tube in a shaker incubator at 37 C and 280 rpm"
       note transformed_aliquot_ids.join(", ")
-      note "Retrive all the tubes after 60 min by starting the plate_ecoli_transformation protocol in the workflow."
+      note "Retrive all the tubes after 45 min by starting the plate_ecoli_transformation protocol in the workflow."
     }
 
     move transformed_aliquots, "37 C shaker incubator"
