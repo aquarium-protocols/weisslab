@@ -17,7 +17,7 @@ place tasks_inputs
 end
 
 place gateway
-  protocol: "aqualib:workflows/ecoli/gateway.rb"
+  protocol: "aqualib:workflows/ecoli/BioCEL_gateway.rb"
   group: group
   marked: false
   start: now()
