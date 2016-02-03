@@ -10,10 +10,10 @@ class Protocol
     {
       io_hash: {},
       #Enter the fragment sample ids as array of arrays, eg [[2058,2059],[2060,2061],[2058,2062]]
-      entr_ids: [[1, 2], [1, 2]],
+      ENTRs: [[1, 2], [1, 2]],
       #Tell the system if the ids you entered are sample ids or item ids by enter sample or item, sample is the default option in the protocol.
-      dest_ids: [3, 3],
-      dest_result_ids: [4, 4],
+      DEST: [3, 3],
+      DEST_result: [4, 4],
       #Enter correspoding plasmid id or fragment id for each fragment to be Gibsoned in.
       debug_mode: "Yes",
     }
@@ -49,12 +49,12 @@ class Protocol
     entr_stocks = io_hash[:entr_ids].collect { |ids|
       ids.collect { |id|
         err_messages.push "Sample #{id} does not have any stock" if !find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
-        find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
+        choose_sample find(:sample,{id: id})[0].name, object_type: "Plasmid Stock"
       }
     }
     dest_stocks = io_hash[:dest_ids].collect { |id|
       err_messages.push "Sample #{id} does not have any stock" if !find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
-      find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
+      choose_sample find(:sample,{id: id})[0].name, object_type: "Plasmid Stock"
     }
 
     raise err_messages.uniq.join(', ') if err_messages.length > 0
