@@ -10,7 +10,7 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      plasmid_stock_ids: [9189,11546,11547,34376,6222,9111],
+      plasmid_stock_ids: [225,226],
       debug_mode: "Yes",
     }
   end
@@ -36,12 +36,10 @@ class Protocol
 
     plasmid_stocks = io_hash[:plasmid_stock_ids].collect{ |pid| find(:item, id: pid )[0] }
 
+    cut_smart = find(:sample, name: "Cut Smart")[0].in("Enzyme Buffer Stock")[0]
+    take plasmid_stocks + [cut_smart], interactive: true, method: "boxes"
+
     plasmids = plasmid_stocks.collect { |p| p.sample }
-
-    take plasmid_stocks, interactive: true, method: "boxes"
-
-    cut_smart = choose_sample "Cut Smart", take: true
-
     stripwells = produce spread plasmids, "Stripwell", 1, 12
 
     show {
@@ -49,36 +47,31 @@ class Protocol
       warning "In the following step you will take restriction enzyme out of the freezer. Make sure the enzyme is kept on ice for the duration of the protocol."
     }
 
-    pmeI = choose_sample "PmeI", take: true
-
-    num = (plasmid_stocks.select { |p| p.object_type.name == "Plasmid Stock" }).length
-
-    water_volume = 42 * num + 21
-    buffer_volume = 5 * num + 2.5
-    enzyme_volume = 1 * num + 0.5
-
+    enzymes = plasmid_stocks.collect { |p| p.sample.properties['Restriction Enzymes'].split(',').map(&:strip) }
+    enzymes_to_take = enzymes.flatten.uniq
     show {
-      title "Make master mix"
-      check "Label a new eppendorf tube MM."
-      check "Add #{water_volume.round(1)} µL of water to the tube."
-      check "Add #{buffer_volume.round(1)} µL of the cutsmart buffer to the tube."
-      check "Add #{enzyme_volume.round(1)} µL of the PmeI to the tube."
-      check "Vortex for 5-10 seconds."
-      warning "Keep the master mix in an ice block while doing the next steps".upcase
+      title "Take the following enzymes"
+      enzymes_to_take.each { |e| check e }
     }
 
-    release [pmeI] + [cut_smart], interactive: true, method: "boxes"
-
+    # assuming 500 ng of DNA and 25 uL diagnostic reaction
     show {
       title "Prepare Stripwell Tubes"
       stripwells.each do |sw|
         check "Label a new stripwell with the id #{sw}. Use enough number of wells to write down the id number."
-        check "Pipette 48 µL from tube MM into wells" + sw.non_empty_string + "."
+        check "Pipette 2.5 µL from #{cut_smart} into wells" + sw.non_empty_string + "."
       end
     }
 
-    load_samples( ["Plasmid, 2 µL"], [plasmid_stocks], stripwells ) {
-      note "Add 2 µL of each plasmid into the stripwell indicated."
+    plasmid_stocks_volumes = plasmid_stocks.collect { |p| (500.0/(p.datum[:concentration]||500)).round(1) }
+
+    plasmid_stocks_volumes_list = plasmid_stocks_volumes.zip(plasmid_stocks).collect { |a| a.join(" µL of ") }
+
+    enzymes_volumes_list = enzymes.collect { |es| es.collect { |e|  "0.5 µL of #{e}" }.join(", ") }
+
+    water_volume_list = plasmid_stocks_volumes.zip(enzymes).collect { |v| 22.5 - v[0] - 0.5*(v[1].length) }
+
+    load_samples_variable_vol( ["Plasmid", "Enzyme", "MG Water"], [plasmid_stocks_volumes_list, enzymes_volumes_list, water_volume_list ], stripwells ) {
       warning "Use a fresh pipette tip for each transfer."
     }
 
@@ -95,7 +88,7 @@ class Protocol
     end
 
     release stripwells
-    release plasmid_stocks, interactive: true, method: "boxes"
+    release plasmid_stocks + [cut_smart], interactive: true, method: "boxes"
 
     if io_hash[:task_ids]
       io_hash[:task_ids].each do |tid|
