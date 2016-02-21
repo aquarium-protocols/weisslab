@@ -6,22 +6,6 @@ class Protocol
   include Standard
   include Cloning
 
-  def choose_group_specific_sample_stock sample_type, common_name, object_type
-    # return group specific sample stock based on user choice
-    samples = find(:sample, { sample_type: { name: sample_type } }).select { |x| x.name.include? common_name }
-
-    choices = samples.collect { |x| "#{x.name}" }
-
-    user_input = show {
-      title "Choose a #{common_name} specific to your group"
-      select choices, var: "x", label: "Choose a #{common_name} specific to your group"
-    }
-
-    cut_smart = find(:sample, name: user_input[:x])[0].in(object_type)[0]
-
-  end
-
-
   def arguments
     {
       io_hash: {},

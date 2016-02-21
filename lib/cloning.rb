@@ -10,6 +10,21 @@ module Cloning
     end
   end
 
+  def choose_group_specific_sample_stock sample_type, common_name, object_type
+    # return group specific sample stock based on user choice
+    samples = find(:sample, { sample_type: { name: sample_type } }).select { |x| x.name.include? common_name }
+
+    choices = samples.collect { |x| "#{x.name}" }
+
+    user_input = show {
+      title "Choose a #{common_name} specific to your group"
+      select choices, var: "x", label: "Choose a #{common_name} specific to your group"
+    }
+
+    cut_smart = find(:sample, name: user_input[:x])[0].in(object_type)[0]
+
+  end
+
   # this function process fragment ids that passed task_inputs, return their PCR recipe template stock, primer aliquts, annealing temperature and length, also return samples whose stock need to be diluted.
   def fragment_recipe id, p={}
     fragment = find(:sample, { id: id })[0]
