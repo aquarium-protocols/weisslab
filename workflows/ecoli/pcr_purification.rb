@@ -107,6 +107,13 @@ class Protocol
 
     io_hash[:fragment_stock_ids] = fragment_stocks.collect { |x| x.id }
 
+    if io_hash[:task_ids]
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        set_task_status(task,"done")
+      end
+    end
+
     return { io_hash: io_hash }
 
   end # main
