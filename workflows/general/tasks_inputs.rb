@@ -10,7 +10,7 @@ class Protocol
     {
       io_hash: {},
       debug_mode: "Yes",
-      task_name: "Gateway Cloning",
+      task_name: "Gibson Fragment Construction",
       group: "technicians"
     }
   end
@@ -127,6 +127,18 @@ class Protocol
       end
       io_hash[:task_ids].concat io_hash[:plasmid_extraction_task_ids]
       io_hash[:size] = io_hash[:num_colonies].inject { |sum, n| sum + n } || 0 + io_hash[:glycerol_stock_ids].length
+
+    when "Gibson Fragment Construction"
+      io_hash[:task_ids].each_with_index do |tid, idx|
+        task = find(:task, id: tid)[0]
+        task.simple_spec.each do |variable_name, ids|
+          io_hash[variable_name] = [] if idx == 0
+          io_hash[variable_name].concat ids
+          if idx == io_hash[:task_ids].length - 1
+            io_hash[:size] = io_hash[variable_name].length
+          end
+        end
+      end
 
     when "Primer Order", "Discard Item", "Yeast Competent Cell", "Fragment Construction", "Yeast Transformation", "Restriction Digest"
       # a general task processing script only works for those tasks with one variable_name
