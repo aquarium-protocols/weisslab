@@ -10,7 +10,7 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      plasmid_stock_ids: [225,226],
+      plasmid_stock_ids: [323,328],
       debug_mode: "Yes",
     }
   end
@@ -36,7 +36,7 @@ class Protocol
 
     plasmid_stocks = io_hash[:plasmid_stock_ids].collect{ |pid| find(:item, id: pid )[0] }
 
-    cut_smart = find(:sample, name: "Cut Smart")[0].in("Enzyme Buffer Stock")[0]
+    cut_smart = choose_group_specific_sample_stock "Enzyme Buffer", "NEB CutSmart 10X", "Enzyme Buffer Stock"
     take plasmid_stocks + [cut_smart], interactive: true, method: "boxes"
 
     plasmids = plasmid_stocks.collect { |p| p.sample }
