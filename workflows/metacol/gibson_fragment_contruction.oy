@@ -1,0 +1,44 @@
+argument
+  debug_mode: string, "Yes or No"
+  group: group, "choose the group to assign this metacol"
+end
+
+place tasks_inputs
+  protocol: "aqualib:workflows/general/tasks_inputs.rb"
+  group: group
+  argument
+    debug_mode: debug_mode
+    group: group
+    task_name: "Gibson Fragment Construction"
+  end
+  marked: true
+  start: now()
+  window: hours(1)
+end
+
+place digest
+  protocol: "aqualib:workflows/ecoli/I-SceI_digest.rb"
+  group: group
+  marked: false
+  start: now()
+  window: hours(1)
+end
+
+place purify
+  protocol: "aqualib:workflows/ecoli/pcr_purification.rb"
+  group: group
+  marked: false
+  start: hours(1)
+  window: hours(1)
+end
+
+wire tasks_inputs => digest
+wire digest => purify
+
+transition [ tasks_inputs ] => [ digest ] when completed(0) end
+transition [ digest ] => [ purify ] when !error(0) && completed(0) end
+transition [ purify ] => [] when !error(0) && completed(0) end
+
+transition [ tasks_inputs ] => [ tasks_inputs ] when error(0) end
+transition [ digest ] => [ digest ] when error(0) end
+transition [ purify ] => [ purify ] when error(0) end
