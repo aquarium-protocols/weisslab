@@ -80,6 +80,7 @@ class Protocol
     } if fragment_stocks_need_length_info.length > 0
 
     # predited_time = time_prediction fragment_stocks_flatten.length, "gibson"
+    # see metacol 2146 production for error associated with this
 
     # Tell the user what we are doing
     show {
