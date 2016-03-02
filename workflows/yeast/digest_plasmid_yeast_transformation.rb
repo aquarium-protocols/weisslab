@@ -26,7 +26,9 @@ class Protocol
         true
       end
     end
-
+    
+    io_hash[:plasmid_stock_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| choose_stock(find(:sample, id: yid)[0].properties["Integrant"]) }
+    
     if io_hash[:plasmid_stock_ids].length == 0
       show {
         title "No plasmid digestion required"
@@ -34,6 +36,8 @@ class Protocol
       }
       return { io_hash: io_hash }
     end
+    
+    
 
     if io_hash[:item_choice_mode].downcase == "yes"
       plasmid_stocks = io_hash[:plasmid_stock_ids].collect{ |pid| choose_sample find(:item, id: pid )[0].sample.name, object_type: "Plasmid Stock" }

@@ -18,13 +18,6 @@ place tasks_inputs
   window: hours(1)
 end
 
-place digest
-  protocol: "aqualib:workflows/yeast/digest_plasmid_yeast_transformation.rb"
-  group: group
-  start: now()
-  window: hours(20)
-end
-
 place make_plate
   protocol: "aqualib:workflows/yeast/make_antibiotic_plate.rb"
   group: group

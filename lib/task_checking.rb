@@ -155,6 +155,13 @@ def sample_check ids, p={}
           else
             warnings.push inventory_check_result[:errors]
           end
+        when "Plasmid"
+          pid = property.id
+          integrant_sample = find(:sample, id: pid)[0]
+          inventory_check_result = inventory_check pid, inventory_types: "#{integrant_sample.sample_type.name} Stock"
+          inventory_check_result[:errors].collect! do |err|
+            "#{sample_field_name} #{err}"
+          end
         end # case
       else
         warnings.push "#{sample_field_name} is required."
@@ -263,7 +270,7 @@ def task_status_check t
           sample_check_result = sample_check(ids, assert_property: "Parent")
           errors.concat sample_check_result[:errors]
           new_tasks["Yeast Competent Cell"] = sample_check_result[:ids_to_make]
-          integrant_check_result = sample_check(ids, assert_property: "Integrant")
+          integrant_check_result = sample_check(ids, assert_property: "Plasmid")
           errors.concat integrant_check_result[:errors]
           new_tasks["Fragment Construction"] = integrant_check_result[:ids_to_make]
         when "yeast_plate_ids"

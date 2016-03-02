@@ -9,10 +9,10 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      yeast_parent_strain_ids: [30,30,30,30],
+      yeast_parent_strain_ids: [115,115,115],
       #stripwell that containing digested plasmids
-      "stripwell_ids Stripwell" => [27109],
-      "yeast_transformed_strain_ids Yeast Strain" => [1705,1706,5079,5079],
+      plasmid_stock_ids: [182,512,510],
+      "yeast_transformed_strain_ids Yeast Strain" => [298,297,298],
       debug_mode: "Yes"
     }
   end
@@ -20,13 +20,15 @@ class Protocol
   def main
     io_hash = input[:io_hash]
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
-    io_hash = { debug_mode: "No", plasmid_ids: [] }.merge io_hash
+    io_hash = { debug_mode: "No", plasmid_stock_ids: [] }.merge io_hash
     if io_hash[:debug_mode].downcase == "yes"
       def debug
         true
       end
     end
-
+    
+    io_hash[:plasmid_stock_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| choose_stock(find(:sample, id: yid)[0].properties["Plasmid"]) }
+  
     if io_hash[:yeast_parent_strain_ids].length == 0
       show {
         title "No yeast transformation required"
@@ -34,12 +36,6 @@ class Protocol
       }
       return { io_hash: io_hash }
     end
-
-    # parse out a list of plasmid sample ids from stripwels
-    stripwells = io_hash[:stripwell_ids].collect { |i| collection_from i }
-    stripwells_array = stripwells.collect { |s| s.matrix }
-    io_hash[:plasmid_ids] = stripwells_array.flatten
-    io_hash[:plasmid_ids].delete(-1)
 
     yeast_competent_cells = []
     yeast_competent_cells_full = [] # an array of yeast_competent_cells include nils.
@@ -63,13 +59,16 @@ class Protocol
         yeast_competent_cells_full.push "NA"
         no_competent_cell_yeast_transformed_strain_ids.push io_hash[:yeast_transformed_strain_ids][idx]
         io_hash[:yeast_transformed_strain_ids][idx] = nil
-        io_hash[:plasmid_ids][idx] = nil
+        io_hash[:plasmid_stock_ids][idx] = nil
       end
 
     end
 
-    io_hash[:yeast_transformed_strain_ids].compact!
-    io_hash[:plasmid_ids].compact!
+    io_hash[:yeast_transformed_strain_ids].compact! # remove nil
+    io_hash[:plasmid_stock_ids].compact! # remove nil
+    plasmid_stocks = io_hash[:plasmid_stock_ids].collect{ |pid| find(:item, id: pid )[0] }
+    
+    plasmids = plasmid_stocks.collect { |p| p.sample }
 
     if no_competent_cell_yeast_transformed_strain_ids.length > 0
       show {
@@ -87,7 +86,7 @@ class Protocol
       return { io_hash: io_hash }
     end
 
-    take yeast_competent_cells, interactive: true, method: "boxes"
+    take yeast_competent_cells + plasmid_stocks, interactive: true, method: "boxes"
 
     yeast_transformation_mixtures = io_hash[:yeast_transformed_strain_ids].collect {|yid| produce new_sample find(:sample, id: yid)[0].name, of: "Yeast Strain", as: "Yeast Transformation Mixture"}
 
@@ -97,58 +96,74 @@ class Protocol
     #   note(yeast_transformation_mixtures.collect {|x| x.id})
     # }
 
-    peg = choose_object "50 percent PEG 3350"
-    lioac = choose_object "1.0 M LiOAc"
-    ssDNA = choose_object "Salmon Sperm DNA (boiled)"
-    take [peg] + [lioac] + [ssDNA], interactive: true
+    # peg = choose_object "50 percent PEG 3350"
+    # lioac = choose_object "1.0 M LiOAc"
+    # ssDNA = choose_object "Salmon Sperm DNA (boiled)"
+    # take [peg] + [lioac] + [ssDNA], interactive: true
 
     tab = [["Old id","New id"]]
     yeast_competent_cells.each_with_index do |y,idx|
       tab.push([y.id,yeast_transformation_mixtures[idx].id])
     end
 
-    take stripwells, interactive: true
-
     show {
       title "Yeast transformation preparation"
       check "Spin down all the Yeast Competent Aliquots on table top centrifuge for 20 seconds"
-      check "Add 240 µL of 50 percent PEG 3350 into each competent aliquot tube."
-      warning "Be careful when pipetting PEG as it is very viscus. Pipette slowly"
+      check "Add 240 µL of 50 percent into each competent aliquot tube using the P1000 pipette tips with a filter!"
+      note "Press the plunger to the first stop and insert the pipette tip into the PEG aliquot. Depress the plunger and wait at least 30 seconds before removing the pipette tip from the PEG. Because PEG is extremely viscous, it will take time for the entire 240 µL volume to be drawn into the pipette tip. Once the volume within the pipette tip stops increasing (watch for a meniscus within the tip to stop rising!), very slowly withdraw the pipette tip from the PEG. After removing the tip, make sure there are no air bubbles near the end of the tip. If there are any air bubbles, then you withdrew the tip too quickly and need to start over. Try to scrape off any excess PEG along the sides of the tube while withdrawing the pipette tip from the PEG aliquot. Slowly dispense the PEG into the vial of yeast cells. Do not mix."
       check "Add 36 µL of 1M LiOAc to each tube"
-      check "Add 25 µL of Salmon Sperm DNA (boiled) to each tube"
+      check "Add 5 µL of 10 mg/ml salmon sperm ssDNA to each tube"
       warning "The order of reagents added is super important for suceess of transformation."
     }
-
-    load_samples_variable_vol(["Yeast Competent Aliquot"],[yeast_competent_cells_full], stripwells) {
-      title "Load 50 µL from each well into corresponding yeast aliquot"
-      note "Pieptte 50 µL from each well into corresponding yeast aliquot"
-      note "Discard the stripwell into waste bin."
+    
+    plasmid_stocks_volumes = plasmid_stocks.collect { |p| (2000/(p.datum[:concentration])).round(1) }
+     
+    water_volumes = plasmid_stocks_volumes.collect { |v| 70-v }
+    
+    plasmid_stock_water_table = [["Yeast Competent Aliquot", "Plasmid Stock", "DI water"]]
+    
+    yeast_competent_cells.each_with_index do |c, idx|
+      plasmid_stock_water_table.push [c.id, { content: "#{plasmid_stocks_volumes[idx]} µL of #{plasmid_stocks[idx]}", check: true }, { content: "#{water_volumes[idx]} µL", check: true }]
+    end
+    
+    
+    show {
+      title "Load plasmid stock and water"
+      table plasmid_stock_water_table  
     }
 
     show {
       title "Re-label all the competent cell tubes"
       table [["Old id","New id"]].concat(yeast_competent_cells.collect {|y| y.id }.zip yeast_transformation_mixtures.collect { |y| { content: y.id, check: true } })
     }
-
-    stripwells.each do |stripwell|
-        stripwell.mark_as_deleted
-    end
-
+    
     show {
-      title "Vortex strongly and heat shock"
-      check "Vortex each tube on highest settings for 45 seconds"
-      check "Place all aliquots on 42 C heat block for 15 minutes"
+      title "Vortex strongly"
+      check "Vortex vigorously until the cells and the above components have been completely mixed."
+      note "This usually takes about 1 minute. After vortexing, the phase separation should disappear and the viscosity from the PEG should be significantly reduced."
+    }
+    
+    show {
+      title "Incubate for 30 minutes"
+      check "Incubate for 30 minutes at 30°C with shaking (200 rpm)."
+      note "Tape your tubes of yeast to the side of an Erlenmeyer flask and put your flask in the orbital shaker in the 30°C warm room in 68-074 across the hall."
+      timer initial: { hours: 0, minutes: 30, seconds: 0}
+    }
+    
+    show {
+      title "Heat shock"
+      check "Place all aliquots in a 42 C water bath for 20 minutes. Water baths are located in 68-077 and 68-074 across the hall."
     }
 
     show {
       title "Retrive tubes and spin down"
-      timer initial: { hours: 0, minutes: 15, seconds: 0}
+      timer initial: { hours: 0, minutes: 20, seconds: 0}
       check "Retrive all #{yeast_transformation_mixtures.length} tubes from 42 C heat block."
-      check "Spin the tube down for 20 seconds on a small tabletop centrifuge."
-      check "Remove all the supernatant carefully with a 1000 µL pipettor (~400 µL total)"
+      check "Spin the tube down for 20 seconds at 6000 rpm."
+      check "Remove all the supernatant carefully with a 1000 µL pipettor (~400 µL total) while leaving the cell pellet intact."
     }
 
-    yeast_markers = io_hash[:plasmid_ids].collect {|pid| find(:sample, id: pid )[0].properties["Yeast Marker"].downcase[0,3]}
+    yeast_markers = plasmids.collect {|p| p.properties["Yeast Marker"].downcase[0,3]}
     yeast_transformation_mixtures_markers = Hash.new {|h,k| h[k] = [] }
     yeast_transformation_mixtures.each_with_index do |y,idx|
       yeast_markers.uniq.each do |mk|
@@ -223,9 +238,9 @@ class Protocol
 
     end
 
-    delete yeast_competent_cells
+    # delete yeast_competent_cells
 
-    release [peg] + [lioac] + [ssDNA], interactive: true
+    # release [peg] + [lioac] + [ssDNA], interactive: true
 
     if io_hash[:task_ids]
       io_hash[:task_ids].each do |tid|
