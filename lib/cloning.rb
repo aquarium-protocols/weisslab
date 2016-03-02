@@ -9,6 +9,23 @@ module Cloning
       include Tasking
     end
   end
+  
+  def ensure_stock_concentration sample_stocks
+    sample_stocks.compact!
+    sample_stocks_need_to_measure = sample_stocks.select { |f| !f.datum[:concentration]}
+    if sample_stocks_need_to_measure.length > 0
+      data = show {
+        title "Nanodrop the following stocks."
+        sample_stocks_need_to_measure.each do |x|
+          get "number", var: "c#{x.id}", label: "Go to B9 and nanodrop tube #{x.id}, enter DNA concentrations in the following", default: 30.2
+        end
+      }
+      sample_stocks_need_to_measure.each do |x|
+        x.datum = (x.datum).merge({ concentration: data[:"c#{x.id}".to_sym] })
+        x.save
+      end
+    end
+  end
 
   def choose_group_specific_sample_stock sample_type, common_name, object_type
     # return group specific sample stock based on user choice

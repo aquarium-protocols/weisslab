@@ -88,6 +88,8 @@ class Protocol
     end
 
     take yeast_competent_cells + plasmid_stocks, interactive: true, method: "boxes"
+    
+    ensure_stock_concentration plasmid_stocks
 
     yeast_transformation_mixtures = io_hash[:yeast_transformed_strain_ids].collect {|yid| produce new_sample find(:sample, id: yid)[0].name, of: "Yeast Strain", as: "Yeast Transformation Mixture"}
 
