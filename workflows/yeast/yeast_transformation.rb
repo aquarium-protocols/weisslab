@@ -112,7 +112,7 @@ class Protocol
     show {
       title "Yeast transformation preparation"
       check "Spin down all the Yeast Competent Aliquots on table top centrifuge for 20 seconds"
-      check "Add 240 µL of 50 percent into each competent aliquot tube using the P1000 pipette tips with a filter!"
+      check "Add 240 µL of 50% PEG into each competent aliquot tube using the P1000 pipette tips with a filter!"
       note "Press the plunger to the first stop and insert the pipette tip into the PEG aliquot. Depress the plunger and wait at least 30 seconds before removing the pipette tip from the PEG. Because PEG is extremely viscous, it will take time for the entire 240 µL volume to be drawn into the pipette tip. Once the volume within the pipette tip stops increasing (watch for a meniscus within the tip to stop rising!), very slowly withdraw the pipette tip from the PEG. After removing the tip, make sure there are no air bubbles near the end of the tip. If there are any air bubbles, then you withdrew the tip too quickly and need to start over. Try to scrape off any excess PEG along the sides of the tube while withdrawing the pipette tip from the PEG aliquot. Slowly dispense the PEG into the vial of yeast cells. Do not mix."
       check "Add 36 µL of 1M LiOAc to each tube"
       check "Add 5 µL of 10 mg/ml salmon sperm ssDNA to each tube"
