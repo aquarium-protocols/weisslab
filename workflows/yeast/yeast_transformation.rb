@@ -27,9 +27,7 @@ class Protocol
       end
     end
     
-    io_hash[:plasmid_stock_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| choose_stock(find(:sample, id: yid)[0].properties["Plasmid"]) }
-  
-    if io_hash[:yeast_parent_strain_ids].length == 0
+    if io_hash[:yeast_transformed_strain_ids].length == 0
       show {
         title "No yeast transformation required"
         note "No yeast transformation need to be done. Thanks for your effort!"
@@ -37,6 +35,9 @@ class Protocol
       return { io_hash: io_hash }
     end
 
+    io_hash[:plasmid_stock_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| choose_stock(find(:sample, id: yid)[0].properties["Plasmid"]) }
+    io_hash[:yeast_parent_strain_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| find(:sample, id: yid)[0].properties["Parent"].id }
+    
     yeast_competent_cells = []
     yeast_competent_cells_full = [] # an array of yeast_competent_cells include nils.
     no_competent_cell_yeast_transformed_strain_ids = []
