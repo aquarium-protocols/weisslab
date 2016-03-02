@@ -162,6 +162,7 @@ def sample_check ids, p={}
           inventory_check_result[:errors].collect! do |err|
             "#{sample_field_name} #{err}"
           end
+          warnings.push inventory_check_result[:errors]
         end # case
       else
         warnings.push "#{sample_field_name} is required."
