@@ -18,13 +18,6 @@ place tasks_inputs
   window: hours(1)
 end
 
-place make_plate
-  protocol: "aqualib:workflows/yeast/make_antibiotic_plate.rb"
-  group: group
-  start: now()
-  window: hours(20)
-end
-
 place transformation
   protocol: "aqualib:workflows/yeast/yeast_transformation.rb"
   group: group
@@ -55,16 +48,12 @@ place re_check
   window: hours(1)
 end
 
-wire tasks_inputs => digest
-wire digest => make_plate
-wire make_plate => transformation
+wire tasks_inputs => transformation
 wire transformation => plate
 wire plate => check
 wire check => re_check
 
-transition [ tasks_inputs ] => [ digest ] when !error(0) && completed(0) end
-transition [ digest ] => [ make_plate ] when !error(0) && completed(0) end
-transition [ make_plate ] => [ transformation ] when !error(0) && completed(0) end
+transition [ tasks_inputs ] => [ transformation ] when !error(0) && completed(0) end
 transition [ transformation ] => [ plate ] when !error(0) && completed(0) end
 transition [ plate ] => [ check ] when !error(0) && completed(0) end
 transition [ check ] => [] when !error(0) && completed(0) end
@@ -72,8 +61,6 @@ transition [ re_check ] => [] when !error(0) && completed (0) end
 
 # restart if errored out
 transition [ tasks_inputs ] => [ tasks_inputs ] when error(0) end
-transition [ digest ] => [ digest ] when error(0) end
-transition [ make_plate ] => [ make_plate ] when error(0) end
 transition [ transformation ] => [ transformation ] when error(0) end
 transition [ plate ] => [ plate ] when error(0) end
 transition [ check ] => [ re_check ] when error(0) end
