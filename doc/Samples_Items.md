@@ -40,7 +40,7 @@ The CSV file should have the following format:
 
 Inventory classes are specified in the Inventory drop down tab.  There are a few tricky things to note about item imports:
 
-1.  Right now it only works for items, and not samples.  If you want to mass import samples, you have to use the API (see API section)
+1.  Right now it only works for samples, and not items.  If you want to mass import items, you have to use the API (see API section)
 2.  The owner and description fields are ignored in CSV processing.  Will update this when this if fixed.
 3.  The last column must be populated with 'none'.
 
