@@ -27,3 +27,23 @@ Deleting items in Aquarium is easy. Just navigate to the sample page of the item
 #### Deleting Samples
 
 Deleting sample is also relatively easy. Go to the inventory drop down tab, select the sample type of the sample to be deleted and then click on the black "x" to the right of the sample name. The same consideration of physical removal for deleting items exists for deleting samples. Since a sample can have many items associated with it, all of the associated items with the sample being deleted will need to be physically removed from their inventory slots.
+
+### Importing Items using spreadsheets
+
+Users can import items by uploading a CSV file to Aquarium.  Go to the inventory drop down tab, and select 'Import Samples from Spreadsheet'.  Remember to save your spreadsheet as a .csv, and locate and select the file on this page.
+
+The CSV file should have the following format:
+
+| Inventory Type |:------------- | :------------- | :------------- | :------------- |
+| Field1 Data |  Field2 Data | Field3 Data | Field4 data | Field5 data | none |
+
+Inventory classes are specified in the Inventory drop down tab.  There are a few tricky things to note about item imports:
+
+1.  Right now it only works for items, and not samples.  If you want to mass import samples, you have to use the API (see API section)
+2.  The owner and description fields are ignored in CSV processing.  Will update this when this if fixed.
+3.  The last column must be populated with 'none'.
+
+An example CSV file for plasmid item uploads should look like the following:
+
+| Plasmids |:------------- |:------------- |:------------- |:------------- |:------------- |
+| [BC16-G1]_pDEST-12(y) | BC16-G1 | https://benchling.com/s/42vkxQ6P/edit | https://benchling.com/s/JFj2klF/edit | AMP | :------------- | 6041 | :------------- | ISce-I | :------------- | None |
