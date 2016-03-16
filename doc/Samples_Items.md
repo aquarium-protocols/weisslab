@@ -47,5 +47,5 @@ Inventory classes are specified in the Inventory drop down tab.  There are a few
 An example CSV file for plasmid item uploads should look like the following:
 
 | Plasmids | | | | | | | | | | |
-|:------------- |:------------- |:------------- |:------------- |:------------- ||:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |
+|:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |
 | [BC16-G1]_pDEST-12(y) | BC16-G1 | https://benchling.com/s/42vkxQ6P/edit | https://benchling.com/s/JFj2klF/edit | AMP | | 6041 | | ISce-I | | None |
