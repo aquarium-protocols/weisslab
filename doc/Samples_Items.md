@@ -34,7 +34,8 @@ Users can import items by uploading a CSV file to Aquarium.  Go to the inventory
 
 The CSV file should have the following format:
 
-| Inventory Type |:------------- | :------------- | :------------- | :------------- |
+| Inventory Type | | | | | |
+|:------------- | :------------- | :------------- | :------------- | :------------- | :------------- |
 | Field1 Data |  Field2 Data | Field3 Data | Field4 data | Field5 data | none |
 
 Inventory classes are specified in the Inventory drop down tab.  There are a few tricky things to note about item imports:
@@ -45,5 +46,6 @@ Inventory classes are specified in the Inventory drop down tab.  There are a few
 
 An example CSV file for plasmid item uploads should look like the following:
 
-| Plasmids |:------------- |:------------- |:------------- |:------------- |:------------- |
-| [BC16-G1]_pDEST-12(y) | BC16-G1 | https://benchling.com/s/42vkxQ6P/edit | https://benchling.com/s/JFj2klF/edit | AMP | :------------- | 6041 | :------------- | ISce-I | :------------- | None |
+| Plasmids | | | | | | | | | | |
+|:------------- |:------------- |:------------- |:------------- |:------------- ||:------------- |:------------- |:------------- |:------------- |:------------- |:------------- |
+| [BC16-G1]_pDEST-12(y) | BC16-G1 | https://benchling.com/s/42vkxQ6P/edit | https://benchling.com/s/JFj2klF/edit | AMP | | 6041 | | ISce-I | | None |
