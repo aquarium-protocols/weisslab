@@ -9,8 +9,8 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      stripwell_ids: [28339],
-      gel_ids: [28276],
+      stripwell_ids: [747],
+      gel_ids: [702],
       debug_mode: "No",
       volume: 50       # The volume of PCR fragment to load in µL
     }
@@ -46,11 +46,21 @@ class Protocol
       gels = io_hash[:gel_ids].collect { |i| collection_from i }
 
       take stripwells + gels, interactive: true
+      
+      ladders = find(:sample, { sample_type: { name: "Ladder" } })
+      
+      ladder_name = show {
+        title "Choose which ladder you want to use:"
+        select ladders.collect { |l| l.name }, var: "choice", label: "Choose which ladder you want to use."
+      }
+      
+      show {
+        title "Grab a ladder and gel loading dye."
+        check ladder_name[:choice]
+        check "Gel Loading Dye Blue (6X)"
+      }
 
-      ladder = choose_sample "1 kb Ladder"
-      dye = choose_object "Gel Loading Dye Blue (6X)"
-
-      take [ladder] + [dye], interactive: true
+      ladder = find(:sample, name: ladder_name[:choice])[0]
 
       show {
         title "Set up the power supply"
@@ -81,7 +91,7 @@ class Protocol
       show {
         title "Load DNA ladder"
         gels.each do |gel|
-          check "Using a 100 µL pipetter, pipet 10 µL of ladder (containing loading dye) from tube #{ladder} into wells 1 (top-left) and 7 (bottom left) of gel #{gel}."
+          check "Using a 100 µL pipetter, pipet 10 µL of ladder (containing loading dye) into wells 1 (top-left) and 7 (bottom left) of gel #{gel}."
         end
         image "gel_begin_loading"
       }
@@ -117,7 +127,7 @@ class Protocol
       }
 
       release gels
-      release [ ladder, dye ], interactive: true
+      # release [ ladder, dye ], interactive: true
 
     end
 
