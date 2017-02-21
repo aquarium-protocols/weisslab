@@ -77,17 +77,17 @@ class Protocol
       }
 
       show {
-        title "Add 5 µL GelGreen"
-        note "Using a 10 µL pipetter, take up 5 µL of GelGreen into the pipet tip. Expel the GelGreen directly into the molten agar (under the surface), then swirl to mix."
-        warning "GelGreen is supposedly safe, but stains DNA and can transit cell membranes (limit your exposure)."
-        warning "GelGreen is photolabile. Limit its exposure to light by putting it back in the box."
+        title "Add 5 µL SyBRSafe"
+        note "Using a 10 µL pipetter, take up 5 µL of SyBRSafe into the pipet tip. Expel the SyBRSafe directly into the molten agar (under the surface), then swirl to mix."
+        warning "SyBRSafe is supposedly safe, but stains DNA and can transit cell membranes (limit your exposure)."
+        warning "SyBRSafe is photolabile. Limit its exposure to light by putting it back in the box."
         # image "gel_add_gelgreen"
       }
 
       show {
         title "Gel Number #{gel_number}, add top comb"
         check "Go get a 49 mL Gel Box With Casting Tray (clean)"
-        check "Retrieve a #{comb_1[0]}-well purple comb from A7.325"
+        check "Retrieve a #{comb_1[0]}-well purple comb"
         check "Position the gel box with the electrodes facing away from you. Add a purple comb to the side of the casting tray nearest the side of the gel box."
         check "Put the #{comb_1[1]} side of the comb down."
         note "Make sure the comb is well-situated in the groove of the casting tray."
@@ -97,7 +97,7 @@ class Protocol
       unless comb_2[0] == 0
         show {
           title "Gel Number #{gel_number}, add bottom comb"
-          check "Retrieve a #{comb_2[0]}-well purple comb from A7.325"
+          check "Retrieve a #{comb_2[0]}-well purple comb"
           check "Position the gel box with the electrodes facing away from you. Add a purple comb to the center of the casting tray."
           check "Put the #{comb_2[1]} side of the comb down."
           note "Make sure the comb is well-situated in the groove of the casting tray."
@@ -112,7 +112,7 @@ class Protocol
         title "Pour and label the gel"
         note "Using a gel pouring autoclave glove, pour agarose from one flask into the casting tray. Pour slowly and in a corner for best results. Pop any bubbles with a 10 µL pipet tip."
         note "Write id #{gel} on piece of lab tape and affix it to the side of the gel box."
-        note "Leave the gel to location A7.325 to solidify."
+        note "Leave the gel to solidify."
         # image "gel_pouring"
       }
 
