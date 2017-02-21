@@ -44,6 +44,7 @@ class Protocol
     show {
       title "Retrive #{io_hash[:cell_type]} competent cell aliquot"
       note "Grab #{num} of #{io_hash[:cell_type]} competent cell aliquot from M80"
+      note "Grab 2 additional competent cell aliquots and label with the ids pUC19 and sH2O"
       note "Label with the following id: #{transformed_aliquots.collect { |t| "#{t}" }.join(", ")}"
     }
 
@@ -51,7 +52,8 @@ class Protocol
 
     # load competent cell aliquot from stripwell
     load_samples_variable_vol(["Competent Cell Aliquot"],[transformed_aliquot_ids], stripwells) {
-      note "Pieptte 2 µL from each well into labeled competent cell aliquot."
+      note "Pipette 2 µL from each well into labeled competent cell aliquot."
+      note "Additionally, pipette 2uL of sH2O and 2uL of pUC19 respectively into their labeled cell aliquots"
       note "Discard the stripwell into waste bin after unloading."
     }
 
