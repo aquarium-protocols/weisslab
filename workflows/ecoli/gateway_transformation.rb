@@ -43,8 +43,8 @@ class Protocol
 
     show {
       title "Retrive #{io_hash[:cell_type]} competent cell aliquot"
-      note "Grab #{num} of #{io_hash[:cell_type]} competent cell aliquot from M80"
-      note "Grab 2 additional competent cell aliquots and label with the ids pUC19 and sH2O"
+      note "Grab 2#{io_hash[:cell_type]} competent cell aliquots and label with the ids pUC19 and sH2O"
+      note "Grab #{num} of #{io_hash[:cell_type]} additional competent cell aliquot from M80"
       note "Label with the following id: #{transformed_aliquots.collect { |t| "#{t}" }.join(", ")}"
     }
 
