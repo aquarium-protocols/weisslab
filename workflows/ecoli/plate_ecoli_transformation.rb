@@ -54,10 +54,12 @@ class Protocol
           title "Grab #{num} #{"plate".pluralize(num)}"
           check "Grab #{num} LB+#{marker[0].upcase}#{marker[1..marker.length]} Plate (sterile)"
           check "Label with the following ids #{plates_with_initials}"
+          check "Grab 2 additional LB+AMP plates and label with the ids pUC19 and sH2O"
         }
         show {
           title "Plating"
           check "Use sterile beads to plate 200 µL from transformed aliquots (1.5 mL tubes) on to the plates following the table below."
+          check "Also use sterile beads to plate 200uL of pUC19 and sH20 aliquots"
           check "Discard used transformed aliquots after plating."
           table [["Aliquot", "LB+#{marker[0].upcase}#{marker[1,2]} Plate"]].concat((transformed_aliquots.collect { |t| t.id }).zip plates.collect{ |p| { content: p.id, check: true } })
         }
