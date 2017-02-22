@@ -146,7 +146,7 @@ class Protocol
       title "Add LR Clonase Enzyme"
       warning "USE A NEW PIPETTE TIP FOR EACH WELL."
       stripwells.each do |sw|
-        check "Pipette 1 µL of LR Clonase Enzyme into each of wells " + sw.non_empty_string + " of stripwell #{sw}."
+        check "Pipette 2 µL of LR Clonase Enzyme into each of wells " + sw.non_empty_string + " of stripwell #{sw}."
       end
       check "Mixing the reaction by using a 10 µL pipette set to 3 uL, pipette up and down gently."
       check "Put the cap on each stripwell. Press each one very hard to make sure it is sealed."
