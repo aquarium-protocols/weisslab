@@ -53,12 +53,12 @@ class Protocol
     num_gels = ( num_samples / num_wells_per_gel.to_f ).ceil
 
     show {
-      title "#{num_gels} 100 mL agarose gel(s) for #{num_samples} sample(s)"
+      title "#{num_gels} 50 mL agarose gel(s) for #{num_samples} sample(s)"
       note "This protocol produces gels to be used to run samples in stripwells #{stripwells.collect { |s| s.id }}"
       note "This protocol should be run in the gel room. If you are not there, log out, go to the gel room, and log in there to run this protocol. It will be under 'Protocols > Pending Jobs'."
     }
 
-    gel_volume = 100.0
+    gel_volume = 50.0
     agarose_mass = (percentage / 100.0) * gel_volume
     error = (agarose_mass * 0.05).round 5
 
@@ -70,15 +70,15 @@ class Protocol
         title "Pour gel"
         check "Grab a flask from on top of the microwave M2."
         check "Using a digital scale, measure out #{agarose_mass} g (+/- #{error} g) of agarose powder and add it to the flask."
-        check "Get a graduated cylinder from on top of the microwave. Measure and add 100 mL of 1X TAE from jug J2 to the flask."
+        check "Get a graduated cylinder from on top of the microwave. Measure and add 50 mL of 1X TAE from jug J2 to the flask."
         check "Use a paper towel to handle the flask. Microwave 70 seconds on high in microwave M2, then swirl. Repeat. The agarose should now be in solution."
         note "If it is not in solution, microwave 7 seconds on high, then swirl. Repeat until dissolved."
         warning "Work in the gel room, wear gloves and eye protection all the time"
       }
 
       show {
-        title "Add 10 µL SyBRSafe"
-        note "Using a 10 µL pipetter, take up 10 µL of SyBRSafe into the pipet tip. Expel the SyBRSafe directly into the molten agar (under the surface), then swirl to mix."
+        title "Add 5 µL SyBRSafe"
+        note "Using a 20 µL pipetter, take up 5 µL of SyBRSafe into the pipet tip. Expel the SyBRSafe directly into the molten agar (under the surface), then swirl to mix."
         warning "SyBRSafe is supposedly safe, but stains DNA and can transit cell membranes (limit your exposure)."
         warning "SyBRSafe is photolabile. Limit its exposure to light by putting it back in the box."
         # image "gel_add_gelgreen"
@@ -105,7 +105,7 @@ class Protocol
         }
       end
 
-      gel = produce new_collection "100 mL #{percentage} Percent Agarose Gel in Gel Box", rows, cols
+      gel = produce new_collection "50 mL #{percentage} Percent Agarose Gel in Gel Box", rows, cols
       gel.move "A7.325"
 
       show {
