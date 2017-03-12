@@ -9,10 +9,10 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      yeast_parent_strain_ids: [115,115,115],
-      #stripwell that containing digested plasmids
+      CHO_strain_ids: [115,115,115],
+      #Prep that contains digested plasmids
       plasmid_stock_ids: [182,512,510],
-      "yeast_transformed_strain_ids Yeast Strain" => [298,297,298],
+      "CHO_transfected_strain_ids CHO Strain" => [298,297,298],
       debug_mode: "Yes"
     }
   end
@@ -27,71 +27,71 @@ class Protocol
       end
     end
     
-    if io_hash[:yeast_transformed_strain_ids].length == 0
+    if io_hash[:CHO_transfected_strain_ids].length == 0
       show {
-        title "No yeast transformation required"
-        note "No yeast transformation need to be done. Thanks for your effort!"
+        title "No transfections required"
+        note "No CHO transfections need to be done. Thanks for your effort!"
       }
       return { io_hash: io_hash }
     end
 
-    io_hash[:plasmid_stock_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| choose_stock(find(:sample, id: yid)[0].properties["Plasmid"]) }
-    io_hash[:yeast_parent_strain_ids] = io_hash[:yeast_transformed_strain_ids].collect { |yid| find(:sample, id: yid)[0].properties["Parent"].id }
+    io_hash[:plasmid_stock_ids] = io_hash[:CHO_transfected_strain_ids].collect { |cid| choose_stock(find(:sample, id: cid)[0].properties["Plasmid"]) }
+    io_hash[:CHO_strain_ids] = io_hash[:CHO_transfected_strain_ids].collect { |cid| find(:sample, id: cid)[0].properties["Parent"].id }
     
-    yeast_competent_cells = []
-    yeast_competent_cells_full = [] # an array of yeast_competent_cells include nils.
-    no_competent_cell_yeast_transformed_strain_ids = []
+    CHO_cells = []
+    CHO_cells_full = [] # an array of yeast_competent_cells include nils.
+    no_CHO_transfected_strain_ids = []
     aliquot_num_hash = Hash.new {|h,k| h[k] = 0 }
     cell_num_hash = Hash.new {|h,k| h[k] = 0 }
-    io_hash[:yeast_parent_strain_ids].each_with_index do |yid, idx|
-      y = find(:sample, id: yid )[0]
-      aliquot_num_hash[y.name] += 1
-      if y.in("Yeast Competent Aliquot")[ aliquot_num_hash[y.name] - 1 ]
-        competent_cell = y.in("Yeast Competent Aliquot")[ aliquot_num_hash[y.name] - 1 ]
+    io_hash[:CHO_strain_ids].each_with_index do |yid, idx|
+      c = find(:sample, id: cid )[0]
+      aliquot_num_hash[c.name] += 1
+      if c.in("CHO Aliquot")[ aliquot_num_hash[y.name] - 1 ]
+        competent_cell = c.in("CHO Aliquot")[ aliquot_num_hash[c.name] - 1 ]
       else
         cell_num_hash[y.name] += 1
-        competent_cell = y.in("Yeast Competent Cell")[ cell_num_hash[y.name] - 1 ]
+        competent_cell = c.in("CHO Cell")[ cell_num_hash[c.name] - 1 ]
       end
 
       if competent_cell
-        yeast_competent_cells.push competent_cell
-        yeast_competent_cells_full.push competent_cell.id
+        CHO_cells.push competent_cell
+        CHO_cells_full.push competent_cell.id
       else
-        yeast_competent_cells_full.push "NA"
-        no_competent_cell_yeast_transformed_strain_ids.push io_hash[:yeast_transformed_strain_ids][idx]
+        CHO_cells_full.push "NA"
+        no_CHO_transfected_strain_ids.push io_hash[:CHO_strain_ids][idx]
         io_hash[:yeast_transformed_strain_ids][idx] = nil
         io_hash[:plasmid_stock_ids][idx] = nil
       end
 
     end
 
-    io_hash[:yeast_transformed_strain_ids].compact! # remove nil
+    io_hash[:CHO_transfected_strain_ids].compact! # remove nil
     io_hash[:plasmid_stock_ids].compact! # remove nil
     plasmid_stocks = io_hash[:plasmid_stock_ids].collect{ |pid| find(:item, id: pid )[0] }
     
     plasmids = plasmid_stocks.collect { |p| p.sample }
 
-    if no_competent_cell_yeast_transformed_strain_ids.length > 0
+    if no_CHO_transfected_strain_ids.length > 0
       show {
         title "Some transformations can not be done"
-        note "Transformation for the following yeast strain can not be performed since there is not enough competent cell."
-        note no_competent_cell_yeast_transformed_strain_ids
+        note "Transformation for the following yeast strain can not be performed since there are not enough CHO aliquots."
+        note no_CHO_transfected_strain_ids
       }
     end
 
-    if yeast_competent_cells.length == 0
+    if CHO_cells.length == 0
       show {
-        title "No yeast transformation required"
-        note "No yeast transformation need to be done. Thanks for your effort!"
+        title "No transfections required"
+        note "No transfections need to be done. Thanks for your effort!"
       }
       return { io_hash: io_hash }
     end
 
-    take yeast_competent_cells + plasmid_stocks, interactive: true, method: "boxes"
+    take CHO_cells + plasmid_stocks, interactive: true, method: "boxes"
     
     ensure_stock_concentration plasmid_stocks
 
-    yeast_transformation_mixtures = io_hash[:yeast_transformed_strain_ids].collect {|yid| produce new_sample find(:sample, id: yid)[0].name, of: "Yeast Strain", as: "Yeast Transformation Mixture"}
+    CHO_transformation_mixtures = io_hash[:CHO_strain_ids].collect {|cid| produce new_sample find(:sample, id: cid)[0].name, of: "Strain", as: "Transformation Mixture"}
 
     # show {
     #   title "Testing page"
@@ -104,6 +104,8 @@ class Protocol
     # ssDNA = choose_object "Salmon Sperm DNA (boiled)"
     # take [peg] + [lioac] + [ssDNA], interactive: true
 
+    ## Currently here.
+    
     tab = [["Old id","New id"]]
     yeast_competent_cells.each_with_index do |y,idx|
       tab.push([y.id,yeast_transformation_mixtures[idx].id])
