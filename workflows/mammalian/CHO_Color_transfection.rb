@@ -25,8 +25,7 @@ class Protocol
     io_hash = { tube_ids: [], Plasmids: [], item_choice_mode: "No", debug_mode: "No" }.merge io_hash
     
     plasmids = io_hash[:plasmid_ids].collect{ |pid| find(:item, id: pid)[0] }    
-    tubes = produce spread plasmids, "1.7mL Tube", 1, 12
-    
+        
     show {
       title "CHO Transfection"
       note "This protocol will perform a co-transfection of CHO-K1 cells using Viafect with 1-3 constitutive color plasmids."
