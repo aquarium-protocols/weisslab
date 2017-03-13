@@ -10,7 +10,7 @@ class Protocol
     {
       io_hash: {},
       #Enter the plasmid  ids as array of arrays, eg [[2058,2059],[2060,2061],[2058,2062]]
-      Plasmids: [[1,2], [1,2]],
+      Plasmids: [1,2],
       #Tell the system if the ids you entered are sample ids or item ids by enter sample or item, sample is the default option in the protocol.
       sample_or_item: "sample",
       debug_mode: "Yes"
@@ -23,7 +23,7 @@ class Protocol
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
     
      # setup default values for io_hash.
-    io_hash = { Plasmids: [[]], debug_mode: "No" }.merge io_hash
+    io_hash = { tube_ids: [], Plasmids: [], debug_mode: "No" }.merge io_hash
     
     io_hash[:plasmid_ids] = io_hash[:Plasmids]
     
