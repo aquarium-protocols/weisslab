@@ -13,7 +13,7 @@ class Protocol
       plasmid_stock_ids: [323,328],
       #Tell the system if the ids you entered are sample ids or item ids by enter sample or item, sample is the default option in the protocol.
       sample_or_item: "sample",
-      debug_mode: "No"
+      debug_mode: "Yes"
     }
   end
 
