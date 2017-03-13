@@ -10,7 +10,7 @@ class Protocol
     {
       io_hash: {},
       #Enter the plasmid  ids as array of arrays, eg [[2058,2059],[2060,2061],[2058,2062]]
-      plasmid_stock_ids: [323,328],
+      Plasmids: [[1,2,[1,2]],
       #Tell the system if the ids you entered are sample ids or item ids by enter sample or item, sample is the default option in the protocol.
       sample_or_item: "sample",
       debug_mode: "Yes"
@@ -21,6 +21,13 @@ class Protocol
   def main
     io_hash = input[:io_hash]
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
+    
+     # setup default values for io_hash.
+    io_hash = { Plasmids: [[]], debug_mode: "No" }.merge io_hash
+    
+    io_hash[:plasmid_ids] = io_hash[:Plasmids]
+    
+    
     if io_hash[:debug_mode].downcase == "yes"
       def debug
         true
@@ -29,7 +36,7 @@ class Protocol
     
     err_messages = []
 
-    plasmid_stocks = io_hash[:plasmid_stock_ids].collect { |ids|
+    plasmid_stocks = io_hash[:plasmid_ids].collect { |ids|
       ids.collect { |id|
         err_messages.push "Sample #{id} does not have any stock" if !find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
         find(:sample,{ id: id })[0].in("Plasmid Stock")[0]
@@ -41,7 +48,7 @@ class Protocol
     show {
       title "CHO Transfection"
       note "This protocol will perform a co-transfection of CHO-K1 cells using Viafect with the following plasmids."
-      note io_hash[:plasmid_stock_ids].collect { |id| "#{id}" }
+      note io_hash[:Plasmids].collect { |id| "#{id}" }
       }
     
     stocks = uniq_plasmid_stocks;
