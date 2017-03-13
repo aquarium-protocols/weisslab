@@ -28,12 +28,82 @@ class Protocol
         
     show {
       title "CHO Transfection"
-      note "This protocol will perform a co-transfection of CHO-K1 cells using Viafect with 1-3 constitutive color plasmids."
+      note "This protocol will perform a co-transfection of CHO-K1 cells using Viafect with constitutive color plasmids."
+      check "Well 1 is a negative control"
+      check "Well 2 is a single color eBFP"
+      check "Well 3 is a dual color eBFP/eYFP"
+      check "Well 4 is a triple color eBFP/eYFP/mKate"
       }
     
-    take plasmids, interactive: true, method: "boxes"
-   
-
+    # take plasmids, interactive: true, method: "boxes"
+    
+    
+    show {
+      title "Labeling Plastic Ware"
+      note "Obtain a 24-well plate from the TAs and label with your initials, CHO0, and 3/13/2017"
+      note "Get 4 1.7mL Eppendorfs and label them 1, 2, 3, and 4."
+      }
+    
+    show {
+      title "Standardizing wells of 24-well plate volume"
+      note "Aspirate media from each of four wells, being careful to come slowly on the side of the well"
+      note "Add 0.5mL of pre-warmed media to each well"
+      }
+    
+    show {
+      title "Preparing Transfection Complexes"
+      note "Obtain plasmids 3000, 3001, 3002, and 3003, all of whom are in 150ng/uL aliquots"
+      note "Pipette the following tube combinations:"
+      check "2uL of 3000 into Tube 1"
+      check "6uL of 3003 into Tube 1"
+      
+      check "2uL of 3000 into Tube 2"
+      check "2uL of 3001 into Tube 2"
+      check "4uL of 3003 into Tube 2"
+      
+      check "2uL of 3000 into Tube 3"
+      check "2uL of 3001 into Tube 3"
+      check "2uL of 3002 into Tube 3"
+      check "2uL of 3003 into Tube 3"
+      
+      check "8uL of 3003 into Tube 4"
+      }
+    
+        
+    show {
+      title "Preparing Transfection Complexes"
+      check "Pipette 40.5uL of Optimem Serum-Free Media into Tubes 1, 2, 3 and 4."
+      check "Pipette 1.5uL of Viafect into Tubes 1, 2, 3, and 4."
+      check "Swirl to mix and proceed."
+      }
+    
+    show {
+      title "Incubation Step for Complexes at Room-Temperature"
+       timer initial: { hours: 0, minutes: 15, seconds: 0}
+      }
+    
+    show {
+      title "Transfection"
+      check "Pipette 50uL of Tube 1 into Well A1"
+      check "Pipette 50uL of Tube 2 into Well B1"
+      check "Pipette 50uL of Tube 3 into Well C1"
+      check "Pipette 50uL of Tube 4 into Well D1"
+      }
+    
+    show {
+      title "Clean and Store"
+      check "Wipe plate with EtOH and return plate to incubator for growth"
+      }
+    
+    
+    # Set tasks in the io_hash to be transfected
+     if io_hash[:task_ids]
+       io_hash[:task_ids].each do |tid|
+         task = find(:task, id: tid)[0]
+         set_task_status(task,"transfected")
+       end
+     end
+     return { io_hash: io_hash }
     
   end
 end
