@@ -17,7 +17,7 @@ place tasks_inputs
 end
 
 place transfection
-  protocol: "aqualib:workflows/ecoli/gateway.rb"
+  protocol: "aqualib:workflows/mammalian/CHO_transfection.rb"
   group: group
   marked: false
   start: now()
@@ -27,5 +27,6 @@ end
 wire tasks_inputs => transfection
 
 transition [ tasks_inputs ] => [ transfected ] when completed(0) end
+transition [ transfected ] => [] when !error(0) && completed(0) end
 
 transition [ transfected ] => [ transfected ] when error(0) end
