@@ -34,29 +34,6 @@ class Protocol
     
     take plasmids, interactive: true, method: "boxes"
    
-    
-    show {
-      title "Prepare Tubes"
-      tubes.each do |tu|
-        check "Label a new tube with the id #{tu}. "
-        end
-    }
-
-    plasmid_stocks_volumes = plasmids.collect { |p| (300.0/(p.datum[:concentration]||300)).round(1) }
-    plasmid_stocks_volumes_list = plasmid_stocks_volumes.zip(plasmids).collect { |a| a.join(" µL of ") }
-    water_volume_list = plasmid_stocks_volumes.collect { |v| “#{48.5 – v} uL” }
-    load_samples_variable_vol( ["Plasmid", "MG Water"], [plasmid_stocks_volumes_list,  water_volume_list ], tubes) {
-      warning "Use a fresh pipette tip for each transfer."
-    }
-show {
-	        title "Add Viafect and Incubation"
-	        note "Add 1.5 µL of Viafect to each tube"
-	        tubes.each do |tu|
-	          bullet "Tubes #{tu.id}, numbers #{tu.non_empty_string}"
-	        end
-
-	      }
-
 
     
   end
