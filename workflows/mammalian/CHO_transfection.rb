@@ -9,13 +9,16 @@ class Protocol
   def arguments
     {
       io_hash: {},
-      CHO_strain_ids: [115,115,115],
-      #Prep that contains digested plasmids
-      plasmid_stock_ids: [182,512,510],
-      "CHO_transfected_strain_ids CHO Strain" => [298,297,298],
-      debug_mode: "Yes"
+      #Enter the fragment sample ids as array of arrays, eg [[2058,2059],[2060,2061],[2058,2062]]
+      Plasmids: [[1, 2], [1, 2]],
+      #Tell the system if the ids you entered are sample ids or item ids by enter sample or item, sample is the default option in the protocol.
+      sample_or_item: "sample",
+      #Enter correspoding plasmid id or fragment id for each fragment to be Gibsoned in.
+      "CHO_strain_ids CHO Strain" => [3,4],
+      debug_mode: "Yes",
     }
   end
+
 
   def main
     io_hash = input[:io_hash]
@@ -39,11 +42,11 @@ class Protocol
     io_hash[:CHO_strain_ids] = io_hash[:CHO_transfected_strain_ids].collect { |cid| find(:sample, id: cid)[0].properties["Parent"].id }
     
     CHO_cells = []
-    CHO_cells_full = [] # an array of yeast_competent_cells include nils.
+    CHO_cells_full = [] # an array of CHO aliquots include nils.
     no_CHO_transfected_strain_ids = []
     aliquot_num_hash = Hash.new {|h,k| h[k] = 0 }
     cell_num_hash = Hash.new {|h,k| h[k] = 0 }
-    io_hash[:CHO_strain_ids].each_with_index do |yid, idx|
+    io_hash[:CHO_strain_ids].each_with_index do |cid, idx|
       c = find(:sample, id: cid )[0]
       aliquot_num_hash[c.name] += 1
       if c.in("CHO Aliquot")[ aliquot_num_hash[y.name] - 1 ]
