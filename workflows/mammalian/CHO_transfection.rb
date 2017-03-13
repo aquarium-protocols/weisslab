@@ -62,7 +62,7 @@ class Protocol
       else
         CHO_cells_full.push "NA"
         no_CHO_transfected_strain_ids.push io_hash[:CHO_strain_ids][idx]
-        io_hash[:yeast_transformed_strain_ids][idx] = nil
+        io_hash[:CHO_strain_ids][idx] = nil
         io_hash[:plasmid_stock_ids][idx] = nil
       end
 
@@ -110,8 +110,8 @@ class Protocol
     ## Currently here.
     
     tab = [["Old id","New id"]]
-    yeast_competent_cells.each_with_index do |y,idx|
-      tab.push([y.id,yeast_transformation_mixtures[idx].id])
+    CHO_cells.each_with_index do |y,idx|
+      tab.push([y.id,CHO_transformation_mixtures[idx].id])
     end
 
     show {
@@ -130,7 +130,7 @@ class Protocol
     
     plasmid_stock_water_table = [["Yeast Competent Aliquot", "Plasmid Stock", "DI water"]]
     
-    yeast_competent_cells.each_with_index do |c, idx|
+    CHO_cells.each_with_index do |c, idx|
       plasmid_stock_water_table.push [c.id, { content: "#{plasmid_stocks_volumes[idx]} µL of #{plasmid_stocks[idx]}", check: true }, { content: "#{water_volumes[idx]} µL", check: true }]
     end
     
@@ -142,7 +142,7 @@ class Protocol
 
     show {
       title "Re-label all the competent cell tubes"
-      table [["Old id","New id"]].concat(yeast_competent_cells.collect {|y| y.id }.zip yeast_transformation_mixtures.collect { |y| { content: y.id, check: true } })
+      table [["Old id","New id"]].concat(CHO_cells.collect {|c| c.id }.zip CHO_transformation_mixtures.collect { |c| { content: c.id, check: true } })
     }
     
     show {
@@ -166,37 +166,37 @@ class Protocol
     show {
       title "Retrive tubes and spin down"
       timer initial: { hours: 0, minutes: 20, seconds: 0}
-      check "Retrive all #{yeast_transformation_mixtures.length} tubes from 42 C heat block."
+      check "Retrive all #{CHO_transformation_mixtures.length} tubes from 42 C heat block."
       check "Spin the tube down for 20 seconds at 6000 rpm."
       check "Remove all the supernatant carefully with a 1000 µL pipettor (~400 µL total) while leaving the cell pellet intact."
     }
 
-    yeast_markers = plasmids.collect {|p| p.properties["Yeast Marker"].downcase[0,3]}
-    yeast_transformation_mixtures_markers = Hash.new {|h,k| h[k] = [] }
-    yeast_transformation_mixtures.each_with_index do |y,idx|
-      yeast_markers.uniq.each do |mk|
-        yeast_transformation_mixtures_markers[mk].push y if yeast_markers[idx] == mk
+    CHO_markers = plasmids.collect {|p| p.properties["Yeast Marker"].downcase[0,3]}
+    CHO_transformation_mixtures_markers = Hash.new {|h,k| h[k] = [] }
+    CHO_transformation_mixtures.each_with_index do |y,idx|
+      CHO_markers.uniq.each do |mk|
+        CHO_transformation_mixtures_markers[mk].push y if yeast_markers[idx] == mk
       end
     end
 
     mixtures_to_incubate = []
     mixtures_to_plate = []
-    yeast_plates = []
+    CHO_plates = []
 
     grab_plate_tab = [["Plate type","Quantity","Id to label"]]
     plating_info_tab = [["1.5 mL tube id","Plate id"]]
 
-    yeast_transformation_mixtures_markers.each do |key, mixtures|
+    CHO_transformation_mixtures_markers.each do |key, mixtures|
       if ["nat","kan","hyg","ble"].include? key
         mixtures_to_incubate.concat mixtures
       else
-        yeast_plates_sub = mixtures.collect {|v| produce new_sample v.sample.name, of: "Yeast Strain", as: "Yeast Plate"}
-        yeast_plates.concat yeast_plates_sub
+        CHO_plates_sub = mixtures.collect {|v| produce new_sample v.sample.name, of: "Yeast Strain", as: "Yeast Plate"}
+        CHO_plates.concat CHO_plates_sub
         mixtures_to_plate.concat mixtures
 
-        grab_plate_tab.push(["-#{key.upcase}", yeast_plates_sub.length, yeast_plates_sub.collect { |y| y.id }.join(", ")])
+        grab_plate_tab.push(["-#{key.upcase}", CHO_plates_sub.length, CHO_plates_sub.collect { |y| y.id }.join(", ")])
         mixtures.each_with_index do |y,idx|
-          plating_info_tab.push([y.id, yeast_plates_sub[idx].id])
+          plating_info_tab.push([y.id, CHO_plates_sub[idx].id])
         end
       end
     end
@@ -241,8 +241,8 @@ class Protocol
       }
 
       delete mixtures_to_plate
-      move yeast_plates, "30 C incubator"
-      release yeast_plates, interactive: true
+      move CHO_plates, "30 C incubator"
+      release CHO_plates, interactive: true
 
     end
 
@@ -256,9 +256,9 @@ class Protocol
         set_task_status(task,"transformed")
       end
     end
-    io_hash[:plate_ids]= yeast_plates.collect {|x| x.id} if yeast_plates.length > 0
+    io_hash[:plate_ids]= CHO_plates.collect {|x| x.id} if yeast_plates.length > 0
 
-    io_hash[:yeast_transformation_mixture_ids] = mixtures_to_incubate.collect { |y| y.id }
+    io_hash[:CHO_transformation_mixture_ids] = mixtures_to_incubate.collect { |y| y.id }
     
     return { io_hash: io_hash }
 
