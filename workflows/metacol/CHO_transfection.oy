@@ -27,4 +27,7 @@ end
 wire tasks_inputs => transfect
 
 transition [ tasks_inputs ] => [ transfect ] when completed(0) end
+transition [ transfect ] => [] when !error(0) && completed(0) end
+
 transition [ transfect ] => [ transfect ] when error(0) end
+
