@@ -54,5 +54,6 @@ class Protocol
     stocks = uniq_plasmid_stocks;
     
     take stocks, interactive: true, method: "boxes"
-
+    
+  end
 end
