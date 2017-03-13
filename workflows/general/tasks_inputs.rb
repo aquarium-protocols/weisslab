@@ -165,7 +165,7 @@ class Protocol
         io_hash[:primer_ids].concat task.simple_spec[:primer_ids]
       end
 
-    when "Yeast Cytometry", "Gateway Cloning", "Plasmid Extraction"
+    when "Yeast Cytometry", "Gateway Cloning", "Plasmid Extraction", "CHO Transfection"
       # a general task processing script without uniqing variable content.
       io_hash[:task_ids].each_with_index do |tid, idx|
         task = find(:task, id: tid)[0]
