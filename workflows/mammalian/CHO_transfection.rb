@@ -41,7 +41,7 @@ class Protocol
     io_hash[:plasmid_stock_ids] = io_hash[:CHO_transfected_strain_ids].collect { |cid| choose_stock(find(:sample, id: cid)[0].properties["Plasmid"]) }
     io_hash[:CHO_strain_ids] = io_hash[:CHO_transfected_strain_ids].collect { |cid| find(:sample, id: cid)[0].properties["Parent"].id }
     
-    CHO_cells = []
+    CHO_cells = io_hash[:CHO_strain_ids] = io_hash[:CHO_transfected_strain_ids].collect { |cid| find(:sample, id: cid)[0].properties["Parent"].id }
     CHO_cells_full = [] # an array of CHO aliquots include nils.
     no_CHO_transfected_strain_ids = []
     aliquot_num_hash = Hash.new {|h,k| h[k] = 0 }
