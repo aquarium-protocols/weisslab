@@ -23,7 +23,7 @@ class Protocol
     io_hash = input if !input[:io_hash] || input[:io_hash].empty?
     
      # setup default values for io_hash.
-    io_hash = { tube_ids: [], Plasmids: [], item_choice_mode: "No" debug_mode: "No" }.merge io_hash
+    io_hash = { tube_ids: [], Plasmids: [], item_choice_mode: "No", debug_mode: "No" }.merge io_hash
     
     io_hash[:plasmid_stock_ids] = io_hash[:Plasmids]
     
