@@ -55,6 +55,14 @@ class Protocol
     
     take stocks, interactive: true, method: "boxes"
 
+# Set tasks in the io_hash to be transfected
+    if io_hash[:task_ids]
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        set_task_status(task,"transfected")
+      end
+    end
+    return { io_hash: io_hash }
 
   end
 end
