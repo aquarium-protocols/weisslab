@@ -17,7 +17,7 @@ place tasks_inputs
 end
 
 place transfect
-  protocol: "aqualib:workflows/mammalian/CHO_DOX_transfection.rb"
+  protocol: "aqualib:workflows/mammalian/CHO_DOX1_transfection.rb"
   group: group
   marked: false
   start: now()
