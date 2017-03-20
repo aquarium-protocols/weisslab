@@ -46,7 +46,7 @@ class Protocol
       }
     
     
-    if plasmids == 1000
+    if plasmids == 2521
     
     show {
       title "Preparing Transfection Complexes"
@@ -69,7 +69,7 @@ class Protocol
       check "4uL of 3014 into Tube 4"
       }
     
-    elsif plasmids == 2000
+    elsif plasmids == 2522
     
     show {
       title "Preparing Transfection Complexes"
@@ -92,7 +92,7 @@ class Protocol
       check "4uL of 3016 into Tube 4"
       }
       
-      elsif plasmids == 3000
+      elsif plasmids == 2523
     
     show {
       title "Preparing Transfection Complexes"
@@ -114,7 +114,31 @@ class Protocol
       check "4uL of 3017 into Tube 4"
       check "4uL of 3018 into Tube 4"
       }
-        end
+    
+       elsif plasmids == 2524
+      
+      show {
+      title "Preparing Transfection Complexes"
+      note "Obtain plasmids 3008, 3009, 3010, 3011, 3012, 3015, and 3016, all are in 150ng/uL aliquots"
+      note "Pipette the following tube combinations:"
+      warning "Be aware of the plasmid identifies AND different volumes"
+      check "8uL of 3008 into Tube 1"
+            
+      check "2uL of 3010 into Tube 2"
+      check "6uL of 3008 into Tube 2"
+      
+      check "2uL of 3009 into Tube 3"
+      check "2uL of 3010 into Tube 3"
+      check "2uL of 3011 into Tube 3"
+      check "2uL of 3008 into Tube 3"
+      
+      check "4uL of 3011 into Tube 4"
+      check "4uL of 3012 into Tube 4"
+      check "4uL of 3015 into Tube 4"
+      check "4uL of 3016 into Tube 4"
+      }
+    
+    end
         
     show {
       title "Preparing Transfection Complexes"
@@ -132,7 +156,7 @@ class Protocol
       }
     
     
-    if plasmids == 1000
+    if plasmids == 2521
     
     show {
       title "Transfection"
@@ -143,7 +167,7 @@ class Protocol
       check "Pipette 50uL of Tube 4 into Well A5"
       }
       
-      elsif plasmids == 2000
+      elsif plasmids == 2522
          
     show {
       title "Transfection"
@@ -154,7 +178,7 @@ class Protocol
       check "Pipette 50uL of Tube 4 into Well B5"
       }
       
-            elsif plasmids == 2000
+       elsif plasmids == 2523
          
     show {
       title "Transfection"
@@ -163,6 +187,17 @@ class Protocol
       check "Pipette 50uL of Tube 3 into Well C3"
       check "Pipette 50uL of Tube 4 into Well C4"
       check "Pipette 50uL of Tube 4 into Well C5"
+      }
+      
+      elsif plasmids == 2524
+         
+    show {
+      title "Transfection"
+      check "Pipette 50uL of Tube 1 into Well D1"
+      check "Pipette 50uL of Tube 2 into Well D2"
+      check "Pipette 50uL of Tube 3 into Well D3"
+      check "Pipette 50uL of Tube 4 into Well D4"
+      check "Pipette 50uL of Tube 4 into Well D5"
       }
       
       end
