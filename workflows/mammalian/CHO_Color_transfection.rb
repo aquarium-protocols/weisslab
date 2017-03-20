@@ -40,7 +40,7 @@ class Protocol
     show {
       title "Labeling Plastic Ware"
       warning "Ensure you stay sterile with all items coming into the TC hood!"
-      check "Obtain a 24-well plate from the TAs and label with your initials, CHO1, and 3/15/2017"
+      check "Obtain a 24-well plate from the TAs and label with your initials, CHO1, and 3/20/2017"
       check "Get 3 1.7mL Eppendorfs and label them 1, 2, and 3."
       }
     
