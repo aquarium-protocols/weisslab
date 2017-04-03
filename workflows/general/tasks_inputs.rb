@@ -67,16 +67,7 @@ class Protocol
     # task sizes limit choose
     io_hash[:task_ids] = task_choose_limit(tasks[:ready_ids], io_hash[:task_name])
 
-    case io_hash[:task_name]
-
-    when "CHO Transfection"
-      io_hash = { plasmid_ids: [] }.merge io_hash
-      io_hash[:task_ids].each do |tid|
-        task = find(:task, id: tid)[0]
-        io_hash[:plasmid_ids].push task.simple_spec[:plasmid]
-      end
-      io_hash[:size] = io_hash[:task_ids].length
-      
+    case io_hash[:task_name]  
       
     when "Glycerol Stock"
       io_hash = { overnight_ids: [], item_ids: [] }.merge io_hash
@@ -218,6 +209,15 @@ class Protocol
         io_hash[:user_ids].push task.user.id
       end
       io_hash[:size] = io_hash[:yeast_mating_strain_ids].length
+      
+      when "CHO Transfection"
+      io_hash = { plasmid_ids: [] }.merge io_hash
+      io_hash[:task_ids].each do |tid|
+        task = find(:task, id: tid)[0]
+        io_hash[:plasmid_ids].push task.simple_spec[:plasmid]
+      end
+      io_hash[:size] = io_hash[:task_ids].length
+    
 
     else
       show {
