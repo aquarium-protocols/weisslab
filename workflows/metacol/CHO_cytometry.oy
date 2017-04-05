@@ -24,7 +24,7 @@ place transfect
   window: hours(1)
 end
 
-wire tasks_inputs => transfect
+wire tasks_inputs => trypsinized
 
 transition [ tasks_inputs ] => [ trypsinized ] when completed(0) end
 transition [ trypsinized ] => [] when !error(0) && completed(0) end
