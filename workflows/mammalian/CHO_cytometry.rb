@@ -66,7 +66,7 @@ class Protocol
     
     show {
       title "Quenching Trypsin"
-      check "Swirl plate gently to ensure cells are no longer adherent. You may want to look at them under the microscope to ensure they've detached.
+      check "Swirl plate gently to ensure cells are no longer adherent. You may want to look at them under the microscope to ensure they've detached."
       check "Pipette 0.5mL DMEM into each well to stop Trypsin reaction."
       }
       
