@@ -61,7 +61,7 @@ class Protocol
     show {
       title "Incubation Step for Trypsin at 37C"
       note "Incubate plate with Trypsin added for 10 minutes at 37C."
-       timer initial: { hours: 0, minutes: 6, seconds: 0}
+       timer initial: { hours: 0, minutes: 10, seconds: 0}
       }
     
     show {
