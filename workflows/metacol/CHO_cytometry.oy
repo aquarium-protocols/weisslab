@@ -26,7 +26,7 @@ end
 
 wire tasks_inputs => transfect
 
-transition [ tasks_inputs ] => [ trypsinize ] when completed(0) end
-transition [ trypsinize ] => [] when !error(0) && completed(0) end
+transition [ tasks_inputs ] => [ trypsinized ] when completed(0) end
+transition [ trypsinized ] => [] when !error(0) && completed(0) end
 
-transition [ trypsinize ] => [ trypsinize ] when error(0) end
+transition [ trypsinized ] => [ trypsinized ] when error(0) end
