@@ -210,7 +210,7 @@ class Protocol
       end
       io_hash[:size] = io_hash[:yeast_mating_strain_ids].length
       
-      when "CHO Transfection"
+      when "CHO Transfection", "CHO Cytometry"
       io_hash = { plasmid_ids: [] }.merge io_hash
       io_hash[:task_ids].each do |tid|
         task = find(:task, id: tid)[0]
