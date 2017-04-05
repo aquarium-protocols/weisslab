@@ -16,7 +16,7 @@ place tasks_inputs
   window: hours(1)
 end
 
-place transfect
+place completed
   protocol: "aqualib:workflows/mammalian/CHO_cytometry.rb"
   group: group
   marked: false
@@ -24,9 +24,9 @@ place transfect
   window: hours(1)
 end
 
-wire tasks_inputs => completed
+wire tasks_inputs =>completed
 
-transition [ tasks_inputs ] => [ completed ] when completed(0) end
-transition [ completed ] => [] when !error(0) && completed(0) end
+transition [tasks_inputs] => [completed] when completed(0) end
+transition [completed] => [] when !error(0) && completed(0) end
 
-transition [ completed ] => [ completed ] when error(0) end
+transition [completed] => [ completed] when error(0) end
