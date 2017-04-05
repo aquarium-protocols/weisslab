@@ -106,7 +106,7 @@ class Protocol
      if io_hash[:task_ids]
        io_hash[:task_ids].each do |tid|
          task = find(:task, id: tid)[0]
-         set_task_status(task,"transfected")
+         set_task_status(task,"trypinized")
        end
      end
      return { io_hash: io_hash }
