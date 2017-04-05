@@ -104,7 +104,7 @@ module Tasking
     case task_prototype_name
     when "Gibson Assembly", "Yeast Mating", "Gateway Cloning"
       size = 1
-    when "CHO Transfection"
+    when "CHO Transfection", "CHO Cytometry"
       size = 1
     when "Gibson Fragment Construction"
       size = task.simple_spec[:fragment_ids].length
